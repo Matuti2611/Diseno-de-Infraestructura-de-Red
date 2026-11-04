@@ -1,4 +1,4 @@
-# Estructura del Proyecto: Diseño de Infraestructura de Red
+# Diseño de Infraestructura de Red
 
 ```text
 diseno-de-infraestructura-de-red/
