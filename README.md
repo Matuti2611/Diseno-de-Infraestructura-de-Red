@@ -4,7 +4,7 @@
 diseno-de-infraestructura-de-red/
 ├── README.md                  
 ├── .gitignore
-├── informe.pdf          
+├── Informe.md
 │
 ├── backend/
 │   ├── requirements.txt
@@ -75,7 +75,7 @@ diseno-de-infraestructura-de-red/
 Archivos generales de configuración y documentación de todo el repositorio.
 * **`README.md`**: Contiene las instrucciones de instalación y ejecución del proyecto. Es el documento entregable principal de cara al usuario o evaluador.
 * **`.gitignore`**: Define qué archivos o carpetas (como entornos virtuales o `node_modules`) deben ser ignorados por Git.
-* **`informe.pdf`**: Documento final con la memoria, justificaciones y análisis del trabajo realizado.
+* **`Informe.md`**: Informe editable que se completa durante el proyecto con las decisiones, resultados, capturas y limitaciones.
 
 ### 2. Backend (Python / FastAPI)
 Módulo encargado de la lógica de negocio, algoritmos de grafos, machine learning y provisión de datos mediante una API REST.
