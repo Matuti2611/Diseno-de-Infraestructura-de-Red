@@ -32,40 +32,64 @@ Cada arista candidata debe indicar sus nodos extremos, costo de construcción y 
 
 ## 3. Modelo predictivo
 
-**Objetivo:** proyectar el consumo futuro de cada zona a partir de sus características disponibles al momento de predecir.
+**Objetivo:** Proyectar el consumo futuro de cada zona a partir de sus características disponibles al momento de predecir.
 
-**Pendiente:** describir variables de entrada, preparación de datos, modelo elegido, separación de entrenamiento y prueba, y resultados de MAE, RMSE y R². Agregar una comparación sencilla y analizar los errores. Evitar usar `consumo_futuro` como variable de entrada.
+**Preparación de datos (Features):** Se descartó la variable `nodo_id` por ser un identificador sin valor predictivo. La variable categórica `tipo_zona` (residencial, comercial, industrial) se procesó utilizando *One-Hot Encoding* para que el modelo pueda interpretarla matemáticamente. Como dicta la buena práctica, no se utilizó `consumo_futuro` como variable de entrada.
+
+**Metodología de entrenamiento:** Se utilizó la librería `scikit-learn` en Python. El dataset histórico de 600 registros se dividió aleatoriamente en un 80 % para entrenamiento y un 20 % para testeo.
+
+**Modelos comparados:** Para resolver este problema de regresión continua, se entrenaron y compararon dos modelos: Regresión Lineal y Árboles de Decisión.
+
+**Métricas obtenidas (sobre el 20 % de testeo):**
+| Modelo | MAE | RMSE | R² |
+| :--- | :--- | :--- | :--- |
+| Regresión Lineal | *[A completar]* | *[A completar]* | *[A completar]* |
+| Árbol de Decisión | *[A completar]* | *[A completar]* | *[A completar]* |
+
+**Análisis de errores:** *[A completar tras el entrenamiento: Indicar si el modelo sobrestima o subestima el consumo en algún tipo de zona específica, y justificar cuál modelo se eligió finalmente para la API.]*
 
 ## 4. Algoritmos de grafos
 
 ### Red de menor costo
-
-Implementar Kruskal o Prim sobre las conexiones candidatas. Registrar el costo total y las aristas seleccionadas.
+Se implementó el algoritmo de **[Kruskal / Prim - A completar cuál elegiste]** mediante la librería `networkx` sobre las conexiones candidatas. Este algoritmo calcula el Árbol de Expansión Mínima (MST), permitiendo encontrar la red que conecta a todos los barrios con el menor costo total de construcción posible.
 
 ### Diagnóstico de capacidad
+Se aplicó el algoritmo de **[Ford-Fulkerson / Edmonds-Karp - A completar cuál elegiste]** sobre la red seleccionada por el paso anterior. El objetivo fue comparar el flujo máximo de agua que puede transitar por las tuberías contra la demanda proyectada, identificando aristas saturadas.
 
-Usar Ford–Fulkerson o Edmonds–Karp sobre la red seleccionada. Comparar el flujo que puede suministrarse con la demanda proyectada total e identificar las aristas saturadas o próximas a su límite.
-
-**Pendiente:** explicar cómo se representa la fuente, cómo se incorpora la demanda de cada zona al cálculo de flujo y cómo se compatibilizan las unidades.
+**Representación de la red y compatibilización de unidades:**
+1.  **Fuente y Sumidero:** Se definió el nodo `PLANTA` como el nodo fuente (source). Para representar la demanda simultánea de todos los barrios, se agregó un "súper sumidero" (super-sink) ficticio al grafo. Cada barrio se conectó a este sumidero general con una arista dirigida cuya capacidad máxima es exactamente su demanda predicha.
+2.  **Unidades:** Dado que la capacidad máxima de las conexiones candidatas está expresada en m³/día, la proyección de consumo futuro mensual de los nodos devuelta por el modelo se dividió por 30 para obtener una demanda diaria y poder operar de forma coherente en el grafo.
 
 ## 5. Integración y aplicación web
 
-Explicar la cadena: datos → predicción → demanda por nodo → red de menor costo → diagnóstico de capacidad → API → frontend.
+El sistema se desarrolló utilizando un monorepo que separa la lógica de cálculo pesada de la interfaz de usuario:
 
-**Pendiente:** incluir la visualización de conexiones candidatas y red seleccionada, el flujo por arista y un selector de escenarios de crecimiento. Mostrar cómo cambia el diagnóstico al modificar la demanda.
+**Backend (API + ML + Grafos):** Construido en Python utilizando FastAPI. Centraliza los datos procesados, la inferencia del modelo predictivo y la lógica de redes (`networkx`). Expone un pipeline que recibe un escenario desde el usuario (ej. +10% de crecimiento), recalcula las demandas, reconstruye el MST, corre el flujo máximo y devuelve el diagnóstico empaquetado en formato JSON.
+
+**Frontend (Interfaz de Usuario):** Construido con React y TypeScript. Consume la API y provee:
+- Una visualización de los tendidos posibles, con la red de menor costo resaltada.
+- Una vista de la red con el flujo sobre cada arista, coloreando de rojo aquellas saturadas o próximas a su capacidad máxima.
+- Un selector de escenarios de crecimiento poblacional que recalcula en tiempo real el diagnóstico.
 
 ## 6. Pruebas y resultados
 
-**Pendiente:** registrar casos de prueba de los algoritmos, métricas del modelo, resultados de los escenarios y capturas del frontend funcionando. Separar los resultados observados de las hipótesis iniciales.
+**Pendiente:** Registrar casos de prueba de los algoritmos, métricas del modelo, resultados observados de los escenarios (+10%, +30%) y adjuntar las capturas de pantalla del frontend interactivo funcionando.
 
 ## 7. Uso de inteligencia artificial
 
-**Registro inicial:** se utilizó Codex para organizar el informe, proponer el caso sintético e implementar el primer generador de datos. Un pedido del intercambio fue: «¿Cómo seguimos?». Las reglas y unidades quedaron explícitas para que el grupo pueda revisarlas y explicarlas. Falta registrar las siguientes intervenciones, errores detectados y la reflexión final.
+A lo largo del proyecto se utilizaron herramientas de IA como apoyo técnico:
+
+- **Codex:** Se usó en la etapa inicial para proponer el caso sintético, organizar el borrador del informe y escribir el script base `generar_dataset.py`.
+- **Gemini:** Se utilizó como asistente de arquitectura de software y diseño de APIs.
+  - *Prompt clave:* "dame una estructura del proyecto (carpetas, archivos, etc) como para ir armando la base antes de hacer cualquier codigo".
+  - *Uso e impacto:* Ayudó a definir un monorepo escalable, modulando internamente el backend en `ml/`, `grafos/` y `api/` para cumplir con la consigna de centralizar la lógica y exponerla a React sin romper la regla de usar una única API. También asistió generando los contratos JSON (esquemas de Pydantic) para poder paralelizar el trabajo entre los dos integrantes del grupo.
+
+*Reflexión:* *[A completar: Casos en los que la IA se equivocó, alucinó una librería o propuso algo incorrecto, y cómo lo solucionaron. Breve reflexión general]*
 
 ## 8. Limitaciones y posibles extensiones
 
-**Pendiente:** documentar las simplificaciones de datos y del modelo de red, qué conclusiones permiten los resultados y qué mejoras se podrían hacer.
+**Pendiente:** Documentar las simplificaciones de datos (parámetros puramente didácticos) y del modelo de red, qué conclusiones permiten los resultados y qué mejoras se podrían hacer (por ejemplo, modelar curvas de demanda horaria en lugar de promedios diarios estáticos).
 
 ## 9. Instalación y ejecución
 
-Las instrucciones para reproducir la aplicación deben mantenerse en el `README.md`. Esta sección puede resumir el entorno usado para obtener los resultados del informe.
+Las instrucciones para levantar el proyecto desde cualquier entorno se documentaron en el archivo `README.md` ubicado en la raíz del repositorio.
