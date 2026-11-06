@@ -6,7 +6,7 @@
 
 Una cooperativa de agua debe planificar los tendidos para abastecer una zona nueva. El sistema debe proyectar la demanda futura de cada zona, encontrar una red que conecte todos los nodos con el menor costo de construcción y comprobar si las capacidades alcanzan para esa demanda.
 
-**Decisiones pendientes:** delimitar la zona de estudio, identificar la planta o fuente de agua, elegir la escala de los nodos y fijar las unidades de demanda, capacidad y costo.
+**Caso de estudio inicial:** zona ficticia con 16 barrios dispuestos en una cuadrícula de 4 × 4 y una planta identificada como `PLANTA`. Las coordenadas son sintéticas y no describen una red real. El consumo se expresa en m³/mes, la capacidad de los enlaces en m³/día y los costos en unidades convencionales. Para comparar demanda y capacidad se dividirá el consumo mensual proyectado por 30 días.
 
 ## 2. Datos
 
@@ -14,13 +14,21 @@ Una cooperativa de agua debe planificar los tendidos para abastecer una zona nue
 
 El enunciado propone: `nodo_id`, `latitud`, `longitud`, `poblacion`, `tipo_zona`, `consumo_historico_mensual`, `crecimiento_poblacional_estimado` y `consumo_futuro`. Este último campo es la variable que se debe predecir.
 
-**Pendiente:** indicar si los datos son reales o sintéticos. Si son sintéticos, documentar el script, la semilla, las reglas de generación, el número de muestras y las limitaciones. Si son reales, citar las fuentes y las transformaciones.
+Los datos iniciales son **sintéticos**. `backend/app/data/generar_dataset.py` produce, por defecto y con semilla `42`:
+
+- `planta.csv`: ubicación de la fuente.
+- `zonas.csv`: 16 barrios con variables disponibles al predecir; no contiene la respuesta futura.
+- `historial_consumo.csv`: 600 observaciones de entrenamiento con la variable objetivo `consumo_futuro`.
+
+La población se sortea entre 200 y 1200 personas; el tipo de zona es residencial, comercial o industrial. La tasa anual de crecimiento se sortea entre 0,5 % y 4 %. Para construir el consumo mensual actual se usa una base de 0,15 m³ por persona y día, multiplicada por 30 días y por factores de tipo de zona (1; 1,45; 2,1), con variación uniforme de ±12 %. El consumo futuro se genera como consumo actual × (1 + crecimiento anual)^5, con variación adicional de ±5 %. Estos parámetros son supuestos didácticos, no mediciones de una cooperativa.
+
+El conjunto de prueba permitirá medir cuánto aprende un modelo de **estas reglas simuladas**. Sus métricas no demostrarán precisión sobre consumo real.
 
 ### Conexiones posibles
 
 Cada arista candidata debe indicar sus nodos extremos, costo de construcción y capacidad máxima de transporte.
 
-**Pendiente:** justificar cómo se generan las aristas, los costos y las capacidades; verificar que el grafo de candidatos sea conexo.
+`backend/app/data/generar_grafo.py` conecta cada barrio con sus vecinos horizontales y verticales y agrega dos enlaces posibles desde la planta: 26 aristas en total. El grafo candidato es conexo. La distancia se aproxima a partir de las coordenadas; el costo es distancia en metros × 10 × un factor de dificultad entre 0,9 y 1,25. Los enlaces de la planta reciben una capacidad de 2500 m³/día; el resto toma valores sintéticos de 750, 1200, 2000 o 3000 m³/día. Estas capacidades sirven para ensayar el algoritmo y no representan cálculos hidráulicos.
 
 ## 3. Modelo predictivo
 
@@ -52,7 +60,7 @@ Explicar la cadena: datos → predicción → demanda por nodo → red de menor 
 
 ## 7. Uso de inteligencia artificial
 
-**Pendiente:** indicar herramientas usadas, tareas en las que ayudaron y en las que no, ejemplos concretos de prompts, errores detectados y una reflexión breve sobre sus límites.
+**Registro inicial:** se utilizó Codex para organizar el informe, proponer el caso sintético e implementar el primer generador de datos. Un pedido del intercambio fue: «¿Cómo seguimos?». Las reglas y unidades quedaron explícitas para que el grupo pueda revisarlas y explicarlas. Falta registrar las siguientes intervenciones, errores detectados y la reflexión final.
 
 ## 8. Limitaciones y posibles extensiones
 

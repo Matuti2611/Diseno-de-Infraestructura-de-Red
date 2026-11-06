@@ -1,5 +1,21 @@
 # Diseño de Infraestructura de Red
 
+## Primer paso: generar los datos del caso sintético
+
+Con Python 3.12, desde la raíz del repositorio:
+
+```powershell
+python backend/app/data/generar_dataset.py
+```
+
+El comando genera en `backend/data/raw/` cuatro CSV: `planta.csv`, `zonas.csv`, `historial_consumo.csv` y `aristas_candidatas.csv`. Usa una semilla fija (`42`) para que el resultado sea reproducible. Se pueden cambiar la semilla y el tamaño del historial con `--semilla` y `--muestras`. Las reglas y unidades están documentadas en [Informe.md](Informe.md). Esta es la primera etapa; el entrenamiento, los algoritmos de grafos y la aplicación web todavía están pendientes.
+
+Para comprobar la reproducibilidad y conectividad del grafo generado:
+
+```powershell
+python -m unittest discover -s backend/tests -p test_datos.py -v
+```
+
 ```text
 diseno-de-infraestructura-de-red/
 ├── README.md                  
@@ -93,7 +109,7 @@ Módulo encargado de la lógica de negocio, algoritmos de grafos, machine learni
 
 * **`app/data/`** (Manejo de Datos):
   * **`generar_dataset.py`**: Script para generar datos sintéticos basados en reglas de negocio predefinidas.
-  * **`generar_grafo.py`**: Crea las aristas candidatas entre zonas, asignando costos y capacidades de transmisión.
+  * **`generar_grafo.py`**: Crea las aristas candidatas entre zonas, asignando costos y capacidades de transporte de agua.
   * **`cargar.py`**: Funciones utilitarias para leer y cargar los archivos CSV utilizando Pandas.
 
 * **`app/ml/`** (Machine Learning):
@@ -113,11 +129,11 @@ Módulo encargado de la lógica de negocio, algoritmos de grafos, machine learni
   * **`pipeline.py`**: Orquestador principal. Conecta todo el flujo: toma el escenario → realiza la predicción de demanda → calcula el MST → evalúa el flujo de red → retorna el resultado integral.
 
 * **Carpetas de apoyo del Backend**:
-  * **`data/raw/`**: Carpeta donde se guardan los CSVs generados inicialmente (`zonas.csv`, `aristas_candidatas.csv`).
+  * **`data/raw/`**: Carpeta con los CSV sintéticos generados (`planta.csv`, `zonas.csv`, `historial_consumo.csv`, `aristas_candidatas.csv`).
   * **`data/processed/`**: Carpeta para los datos limpios y procesados listos para el entrenamiento.
   * **`models/`**: Almacena el modelo de Machine Learning exportado (ej. `.joblib`) y sus métricas en formato `.json`.
   * **`notebooks/exploracion.ipynb`**: Cuaderno de Jupyter utilizado para el Análisis Exploratorio de Datos (EDA) y experimentación de modelos.
-  * **`tests/`**: Pruebas unitarias y de integración (`test_mst.py`, `test_flujo.py` con casos de prueba conocidos, `test_pipeline.py`).
+  * **`tests/`**: Pruebas unitarias y de integración. `test_datos.py` comprueba los datos sintéticos; `test_mst.py`, `test_flujo.py` y `test_pipeline.py` están pendientes.
 
 ### 3. Frontend (React / Vite / TypeScript)
 Interfaz de usuario para visualizar los grafos, interactuar con los escenarios de predicción y ver el diagnóstico de la red.
