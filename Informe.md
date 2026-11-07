@@ -73,7 +73,17 @@ El sistema se desarrolló utilizando un monorepo que separa la lógica de cálcu
 
 ## 6. Pruebas y resultados
 
-**Pendiente:** Registrar casos de prueba de los algoritmos, métricas del modelo, resultados observados de los escenarios (+10%, +30%) y adjuntar las capturas de pantalla del frontend interactivo funcionando[cite: 4, 8].
+**Prueba de la Red de Menor Costo (Kruskal):**
+Al ejecutar el algoritmo sobre las 26 aristas candidatas generadas, el sistema seleccionó exitosamente 16 conexiones (el mínimo necesario para conectar la planta y los 16 barrios sin formar ciclos). El costo total proyectado para esta obra fue de 73066.05 unidades.
+
+**Prueba de Diagnóstico de Capacidad (Edmonds-Karp):**
+Se realizó una simulación base incrementando artificialmente el consumo histórico en un 20% para forzar el comportamiento de la red. Los resultados demostraron que el sistema detecta correctamente los cuellos de botella:
+- **Agua requerida:** 2351.52 m³/día.
+- **Agua abastecida (Flujo Máximo):** 1441.97 m³/día.
+- **Diagnóstico:** Déficit hídrico. La red de menor costo no posee la capacidad suficiente para esta demanda proyectada.
+- **Tramos Críticos:** El algoritmo identificó 2 aristas saturadas al 100% de su capacidad que limitan la distribución: `Z01 <-> Z05` (1200 m³/día) y `Z05 <-> Z06` (750 m³/día)[cite: 7, 8].
+
+*Queda pendiente adjuntar las capturas de pantalla de la interfaz gráfica desarrollada en React mostrando estos mismos resultados y escenarios interactivos.*
 
 ## 7. Uso de inteligencia artificial
 
