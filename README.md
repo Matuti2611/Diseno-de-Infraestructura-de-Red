@@ -1,5 +1,11 @@
 # Diseño de Infraestructura de Red
 
+## Contexto y planificación
+
+- [Contexto actualizado del proyecto](docs/context.md): estado real de página, datos, ML, grafos, API y pruebas; debe revisarse y actualizarse ante cambios importantes, commits y push.
+- [Plan de arquitectura del frontend](docs/plan-frontend.md): alcance inicial aprobado, flujos, contrato propuesto, alternativas y etapas; implementación pendiente.
+- [Instrucciones para agentes de código](AGENTS.md): lectura del contexto, mantenimiento de documentación y criterios de trabajo y pruebas.
+
 ## Primer paso: generar los datos del caso sintético
 
 Con Python 3.12, desde la raíz del repositorio:
