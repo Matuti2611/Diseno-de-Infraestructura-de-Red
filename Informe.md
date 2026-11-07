@@ -38,23 +38,23 @@ Cada arista candidata debe indicar sus nodos extremos, costo de construcción y 
 
 **Metodología de entrenamiento:** Se utilizó la librería `scikit-learn` en Python. El dataset histórico de 600 registros se dividió aleatoriamente en un 80 % para entrenamiento y un 20 % para testeo.
 
-**Modelos comparados:** Para resolver este problema de regresión continua, se entrenaron y compararon dos modelos: Regresión Lineal y Árboles de Decisión.
+**Modelos comparados:** Para resolver este problema de regresión continua, se entrenaron y compararon dos modelos: Regresión Lineal y Árboles de Decisión[cite: 2].
 
 **Métricas obtenidas (sobre el 20 % de testeo):**
 | Modelo | MAE | RMSE | R² |
 | :--- | :--- | :--- | :--- |
-| Regresión Lineal | *[A completar]* | *[A completar]* | *[A completar]* |
-| Árbol de Decisión | *[A completar]* | *[A completar]* | *[A completar]* |
+| Regresión Lineal | 131.28 | 172.97 | 0.9939 |
+| Árbol de Decisión | 197.95 | 308.79 | 0.9807 |
 
-**Análisis de errores:** *[A completar tras el entrenamiento: Indicar si el modelo sobrestima o subestima el consumo en algún tipo de zona específica, y justificar cuál modelo se eligió finalmente para la API.]*
+**Análisis de errores:** Ambos modelos lograron un ajuste excelente ($R^{2} > 0.98$), lo cual es esperable dado que los datos son sintéticos y el modelo logra descubrir las reglas que se usaron para generarlos[cite: 2]. Sin embargo, la Regresión Lineal superó al Árbol de Decisión, presentando un error medio absoluto (MAE) menor y un error cuadrático medio (RMSE) mucho más bajo. Esto ocurre porque la regla de generación subyacente (consumo base multiplicado por una tasa de crecimiento constante) describe un comportamiento que la regresión lineal capta de forma natural, mientras que el árbol de decisión intenta aproximarlo mediante escalones discretos. Por lo tanto, el modelo elegido para exportar a la API es la **Regresión Lineal**.
 
 ## 4. Algoritmos de grafos
 
 ### Red de menor costo
-Se implementó el algoritmo de **[Kruskal / Prim - A completar cuál elegiste]** mediante la librería `networkx` sobre las conexiones candidatas. Este algoritmo calcula el Árbol de Expansión Mínima (MST), permitiendo encontrar la red que conecta a todos los barrios con el menor costo total de construcción posible.
+Se implementó el algoritmo de **[Kruskal / Prim - A completar cuál elegiste]** mediante la librería `networkx` sobre las conexiones candidatas[cite: 3]. Este algoritmo calcula el Árbol de Expansión Mínima (MST), permitiendo encontrar la red que conecta a todos los barrios con el menor costo total de construcción posible[cite: 7].
 
 ### Diagnóstico de capacidad
-Se aplicó el algoritmo de **[Ford-Fulkerson / Edmonds-Karp - A completar cuál elegiste]** sobre la red seleccionada por el paso anterior. El objetivo fue comparar el flujo máximo de agua que puede transitar por las tuberías contra la demanda proyectada, identificando aristas saturadas.
+Se aplicó el algoritmo de **[Ford-Fulkerson / Edmonds-Karp - A completar cuál elegiste]** sobre la red seleccionada por el paso anterior[cite: 7]. El objetivo fue comparar el flujo máximo de agua que puede transitar por las tuberías contra la demanda proyectada, identificando aristas saturadas[cite: 7].
 
 **Representación de la red y compatibilización de unidades:**
 1.  **Fuente y Sumidero:** Se definió el nodo `PLANTA` como el nodo fuente (source). Para representar la demanda simultánea de todos los barrios, se agregó un "súper sumidero" (super-sink) ficticio al grafo. Cada barrio se conectó a este sumidero general con una arista dirigida cuya capacidad máxima es exactamente su demanda predicha.
@@ -64,16 +64,26 @@ Se aplicó el algoritmo de **[Ford-Fulkerson / Edmonds-Karp - A completar cuál 
 
 El sistema se desarrolló utilizando un monorepo que separa la lógica de cálculo pesada de la interfaz de usuario:
 
-**Backend (API + ML + Grafos):** Construido en Python utilizando FastAPI. Centraliza los datos procesados, la inferencia del modelo predictivo y la lógica de redes (`networkx`). Expone un pipeline que recibe un escenario desde el usuario (ej. +10% de crecimiento), recalcula las demandas, reconstruye el MST, corre el flujo máximo y devuelve el diagnóstico empaquetado en formato JSON.
+**Backend (API + ML + Grafos):** Construido en Python utilizando FastAPI[cite: 3]. Centraliza los datos procesados, la inferencia del modelo predictivo y la lógica de redes (`networkx`). Expone un pipeline que recibe un escenario desde el usuario (ej. +10% de crecimiento)[cite: 8], recalcula las demandas, reconstruye el MST, corre el flujo máximo y devuelve el diagnóstico empaquetado en formato JSON.
 
-**Frontend (Interfaz de Usuario):** Construido con React y TypeScript. Consume la API y provee:
-- Una visualización de los tendidos posibles, con la red de menor costo resaltada.
-- Una vista de la red con el flujo sobre cada arista, coloreando de rojo aquellas saturadas o próximas a su capacidad máxima.
-- Un selector de escenarios de crecimiento poblacional que recalcula en tiempo real el diagnóstico.
+**Frontend (Interfaz de Usuario):** Construido con React y TypeScript[cite: 3]. Consume la API y provee:
+- Una visualización de los tendidos posibles, con la red de menor costo resaltada[cite: 7].
+- Una vista de la red con el flujo sobre cada arista, coloreando de rojo aquellas saturadas o próximas a su capacidad máxima[cite: 8].
+- Un selector de escenarios de crecimiento poblacional que recalcula en tiempo real el diagnóstico[cite: 8].
 
 ## 6. Pruebas y resultados
 
-**Pendiente:** Registrar casos de prueba de los algoritmos, métricas del modelo, resultados observados de los escenarios (+10%, +30%) y adjuntar las capturas de pantalla del frontend interactivo funcionando.
+**Prueba de la Red de Menor Costo (Kruskal):**
+Al ejecutar el algoritmo sobre las 26 aristas candidatas generadas, el sistema seleccionó exitosamente 16 conexiones (el mínimo necesario para conectar la planta y los 16 barrios sin formar ciclos). El costo total proyectado para esta obra fue de 73066.05 unidades.
+
+**Prueba de Diagnóstico de Capacidad (Edmonds-Karp):**
+Se realizó una simulación base incrementando artificialmente el consumo histórico en un 20% para forzar el comportamiento de la red. Los resultados demostraron que el sistema detecta correctamente los cuellos de botella:
+- **Agua requerida:** 2351.52 m³/día.
+- **Agua abastecida (Flujo Máximo):** 1441.97 m³/día.
+- **Diagnóstico:** Déficit hídrico. La red de menor costo no posee la capacidad suficiente para esta demanda proyectada.
+- **Tramos Críticos:** El algoritmo identificó 2 aristas saturadas al 100% de su capacidad que limitan la distribución: `Z01 <-> Z05` (1200 m³/día) y `Z05 <-> Z06` (750 m³/día)[cite: 7, 8].
+
+*Queda pendiente adjuntar las capturas de pantalla de la interfaz gráfica desarrollada en React mostrando estos mismos resultados y escenarios interactivos.*
 
 ## 7. Uso de inteligencia artificial
 
@@ -82,7 +92,7 @@ A lo largo del proyecto se utilizaron herramientas de IA como apoyo técnico:
 - **Codex:** Se usó en la etapa inicial para proponer el caso sintético, organizar el borrador del informe y escribir el script base `generar_dataset.py`.
 - **Gemini:** Se utilizó como asistente de arquitectura de software y diseño de APIs.
   - *Prompt clave:* "dame una estructura del proyecto (carpetas, archivos, etc) como para ir armando la base antes de hacer cualquier codigo".
-  - *Uso e impacto:* Ayudó a definir un monorepo escalable, modulando internamente el backend en `ml/`, `grafos/` y `api/` para cumplir con la consigna de centralizar la lógica y exponerla a React sin romper la regla de usar una única API. También asistió generando los contratos JSON (esquemas de Pydantic) para poder paralelizar el trabajo entre los dos integrantes del grupo.
+  - *Uso e impacto:* Ayudó a definir un monorepo escalable, modulando internamente el backend en `ml/`, `grafos/` y `api/` para cumplir con la consigna de centralizar la lógica y exponerla a React sin romper la regla de usar una única API[cite: 2]. También asistió generando los contratos JSON (esquemas de Pydantic) para poder paralelizar el trabajo entre los dos integrantes del grupo.
 
 *Reflexión:* *[A completar: Casos en los que la IA se equivocó, alucinó una librería o propuso algo incorrecto, y cómo lo solucionaron. Breve reflexión general]*
 
@@ -92,4 +102,4 @@ A lo largo del proyecto se utilizaron herramientas de IA como apoyo técnico:
 
 ## 9. Instalación y ejecución
 
-Las instrucciones para levantar el proyecto desde cualquier entorno se documentaron en el archivo `README.md` ubicado en la raíz del repositorio.
+Las instrucciones para levantar el proyecto desde cualquier entorno se documentaron en el archivo `README.md` ubicado en la raíz del repositorio[cite: 4].

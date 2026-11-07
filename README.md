@@ -14,7 +14,9 @@ Con Python 3.12, desde la raíz del repositorio:
 python backend/app/data/generar_dataset.py
 ```
 
-El comando genera en `backend/data/raw/` cuatro CSV: `planta.csv`, `zonas.csv`, `historial_consumo.csv` y `aristas_candidatas.csv`. Usa una semilla fija (`42`) para que el resultado sea reproducible. Se pueden cambiar la semilla y el tamaño del historial con `--semilla` y `--muestras`. Las reglas y unidades están documentadas en [Informe.md](Informe.md). Esta es la primera etapa; el entrenamiento, los algoritmos de grafos y la aplicación web todavía están pendientes.
+El comando genera en `backend/data/raw/` cuatro CSV: `planta.csv`, `zonas.csv`, `historial_consumo.csv` y `aristas_candidatas.csv`. Usa una semilla fija (`42`) para que el resultado sea reproducible. Se pueden cambiar la semilla y el tamaño del historial con `--semilla` y `--muestras`. Las reglas y unidades están documentadas en [Informe.md](Informe.md).
+
+Matías incorporó el entrenamiento, un modelo exportado, cálculos de MST y flujo mediante NetworkX y el endpoint `POST /api/simular-red`. La página sigue pendiente; antes de integrarla faltan pruebas del backend y completar los datos de la respuesta. El estado detallado y las limitaciones verificadas están en [docs/context.md](docs/context.md).
 
 Para comprobar la reproducibilidad y conectividad del grafo generado:
 
@@ -126,9 +128,9 @@ Módulo encargado de la lógica de negocio, algoritmos de grafos, machine learni
 
 * **`app/grafos/`** (Algoritmos de Redes):
   * **`construir.py`**: Instancia el grafo con NetworkX, integrando nodos (demandas) y aristas (costos/capacidades).
-  * **`mst.py`**: Implementación propia del algoritmo de Kruskal o Prim para encontrar el diseño de red más económico.
+  * **`mst.py`**: Calcula el MST mediante NetworkX. Revisar la implementación propia de Kruskal o Prim requerida para cumplir claramente la consigna.
   * **`union_find.py`**: Estructura de datos de conjuntos disjuntos, esencial si se utiliza el algoritmo de Kruskal.
-  * **`flujo.py`**: Implementación del algoritmo de Edmonds-Karp para calcular el flujo máximo en la red.
+  * **`flujo.py`**: Construye la red dirigida con supersumidero y calcula el flujo máximo mediante NetworkX. Falta revisar la implementación propia y la selección explícita de Edmonds-Karp.
   * **`diagnostico.py`**: Funciones para analizar qué aristas se encuentran saturadas o cerca de su límite operativo (ej. ≥90% de capacidad).
 
 * **`app/servicios/`**:

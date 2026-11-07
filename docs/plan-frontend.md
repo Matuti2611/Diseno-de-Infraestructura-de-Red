@@ -52,7 +52,9 @@ El esquema actual de Matías es el punto de partida. Antes de implementar el int
 | Resumen | Demanda total, caudal suministrado, déficit y unidad m³/día |
 | Métricas ML | MAE, RMSE, R² y unidad de los errores; solo resultados reales disponibles |
 
-Propuesta de operaciones, **a acordar con Matías**: consultar la red candidata y solicitar una simulación con el multiplicador. Elegir rutas y formato exacto antes de conectarlas; las rutas aún no están implementadas.
+Matías ya implementó `POST /api/simular-red` para solicitar una simulación. La respuesta actual todavía no expone todas las conexiones candidatas, la planta como nodo, todos los flujos ni el resumen completo. Acordar esas ampliaciones y si habrá una consulta separada de red candidata antes de integrar la página.
+
+También acordar la semántica del escenario: el esquema lo describe como multiplicador de demanda, mientras que el predictor actual multiplica la tasa de crecimiento poblacional. El texto del selector debe reflejar el cálculo efectivo del backend.
 
 La API valida escenarios y es responsable de predicciones, selección del MST, flujos y totales. El frontend envía el escenario y presenta la respuesta. CSV, JSON y tipos TypeScript deben compartir un mapeo explícito de nombres y unidades; el consumo mensual se convierte a diario en backend.
 
