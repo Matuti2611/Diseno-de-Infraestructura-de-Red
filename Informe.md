@@ -2,7 +2,7 @@
 
 > Estado: borrador de trabajo. Completar cada sección a medida que se implementa y evalúa el proyecto.
 
-Referencia de requisitos: `enunciado.pdf`, consignas generales y entregables en páginas 1–4 y trabajo «Diseño de infraestructura de red» en páginas 7–8. Revisión del 08/11/2026: [estado de cumplimiento y pendientes](docs/revision-consigna.md). Las descripciones siguientes distinguen implementación, resultados reportados y verificaciones pendientes.
+Referencia de requisitos: `enunciado.pdf`, consignas generales y entregables en páginas 1–4 y trabajo «Diseño de infraestructura de red» en páginas 7–8. Ver [estado de cumplimiento y pendientes](docs/revision-consigna.md). Las descripciones siguientes distinguen implementación, resultados reportados y verificaciones pendientes.
 
 ## 1. Problema y objetivo
 
@@ -28,7 +28,7 @@ El conjunto de prueba permitirá medir cuánto aprende un modelo de **estas regl
 
 Este procedimiento sigue la alternativa de dataset sintético admitida por el enunciado (página 2): se entrega el script generador, se declaran las dependencias entre variables y se fija una semilla para reproducir el caso. Las columnas propuestas en la página 7 están en `historial_consumo.csv`; `zonas.csv` omite intencionalmente `consumo_futuro`, porque contiene las zonas para las que hay que predecirlo. `fila` y `columna` son columnas adicionales para construir la cuadrícula; las tablas del enunciado permiten agregar campos.
 
-El 08/11/2026 se comprobaron los CSV versionados: una planta, 16 zonas, 600 muestras y 26 conexiones; las etiquetas respetan la fórmula de crecimiento compuesto a cinco años con ruido artificial de ±5 %. También pasó el test existente de generación reproducible y conectividad. Esto valida el generador, no el aprendizaje del modelo ni los algoritmos de red.
+Se comprobaron los CSV versionados: una planta, 16 zonas, 600 muestras y 26 conexiones; las etiquetas respetan la fórmula de crecimiento compuesto a cinco años con ruido artificial de ±5 %. También pasó el test de generación reproducible y conectividad. Esto valida el generador, no el aprendizaje del modelo ni los algoritmos de red.
 
 ### Conexiones posibles
 
@@ -44,7 +44,7 @@ Cada arista candidata debe indicar sus nodos extremos, costo de construcción y 
 
 **Metodología de entrenamiento:** Se utilizó la librería `scikit-learn` en Python. El dataset histórico de 600 registros se dividió aleatoriamente en un 80 % para entrenamiento y un 20 % para testeo.
 
-El código usa semilla 42 y calcula las métricas sobre el conjunto separado. Ambos modelos se comparan sobre ese mismo test. El script exporta la regresión lineal a `backend/models/modelo_consumo.joblib` y persiste las métricas resultantes en `backend/models/metricas.json`, las cuales son consumidas dinámicamente por la API.
+El código usa semilla 42 y calcula las métricas sobre el conjunto separado. Ambos modelos se comparan sobre ese mismo test: falta separar la elección del modelo de la evaluación final. El script exporta explícitamente la regresión lineal a `backend/models/modelo_consumo.joblib` y escribe métricas en `backend/models/metricas.json`. La API lee y valida ese archivo; si falta o es inválido devuelve `null`, sin cifras de respaldo. La corrección se explica en la sección de errores de IA.
 
 **Modelos comparados:** Regresión lineal (`LinearRegression`) y árbol de decisión para regresión (`DecisionTreeRegressor`). Ambos están entre las familias permitidas por el enunciado (página 2). Se predice una cantidad de agua, por lo que es un problema de regresión, no de clasificación.
 
@@ -61,12 +61,12 @@ El código usa semilla 42 y calcula las métricas sobre el conjunto separado. Am
 ### Red de menor costo
 El problema se resuelve con un árbol de expansión mínima (MST): conectar planta y barrios minimizando la suma de costos de construcción. El enunciado pide implementar **Kruskal o Prim** (página 7).
 
-**Implementación manual:** Se implementó el algoritmo de **Kruskal** desde cero en `backend/app/grafos/mst.py` apoyado en una estructura propia de conjuntos disjuntos (`UnionFind` en `union_find.py`) con optimizaciones de compresión de caminos y unión por rango. El algoritmo ordena las aristas candidatas por costo de manera ascendente e incorpora cada enlace siempre que sus extremos pertenezcan a componentes conexas distintas, evitando ciclos. Para garantizar robustez, el módulo valida en cada ejecución que el costo total ($73\,066.05$) y las aristas coincidan exactamente con la referencia de `networkx.minimum_spanning_tree`.
+**Implementación manual:** Kruskal en `backend/app/grafos/mst.py`, con `UnionFind`, compresión de caminos y unión por rango. Ordena aristas por costo y acepta un enlace si une componentes distintas. El costo del caso actual es 73066.05 unidades. El código compara el costo con NetworkX usando tolerancia absoluta de 0.1; no compara conjuntos de aristas ni exige igualdad exacta. Ante costos empatados puede haber distintos árboles óptimos. Ahora verifica conexión de todos los nodos esperados y rechaza una topología vacía o desconectada; no presenta un bosque como red completa.
 
 ### Diagnóstico de capacidad
 El objetivo es comparar la demanda proyectada con el máximo caudal que puede transportar la red elegida. El enunciado pide **Ford–Fulkerson o Edmonds–Karp** (página 7).
 
-**Implementación manual:** Se implementó el algoritmo de **Edmonds–Karp** desde cero en `backend/app/grafos/flujo.py`. Utiliza búsqueda en anchura (`bfs_manual`) sobre la red residual para hallar el camino de aumento más corto en cantidad de aristas desde la fuente hacia el sumidero, actualizando capacidades residuales en ambos sentidos hasta que no existan más caminos disponibles. De igual manera, se valida en cada ejecución la coincidencia exacta del caudal abastecido con `networkx.maximum_flow`.
+**Implementación manual:** Edmonds–Karp en `backend/app/grafos/flujo.py`. Usa BFS para hallar caminos de aumento más cortos en cantidad de aristas y actualiza el flujo en ambos sentidos de la red residual. El total abastecido se compara con NetworkX con tolerancia absoluta de 0.1; no se compara la asignación por arista. Las soluciones máximas pueden distribuir el agua de forma distinta. Una comprobación adicional de revisión que requiere cancelar un flujo previo obtuvo el máximo esperado de 2.
 
 **Representación de la red y compatibilización de unidades:**
 1.  **Fuente y Sumidero:** Se definió el nodo `PLANTA` como el nodo fuente (source). Para representar la demanda simultánea de todos los barrios, se agregó un "súper sumidero" (super-sink) ficticio al grafo. Cada barrio se conectó a este sumidero general con una arista dirigida cuya capacidad máxima es exactamente su demanda predicha.
@@ -87,40 +87,50 @@ El sistema se desarrolló utilizando un monorepo que separa la lógica de cálcu
 - Escenarios base, +10 % y +30 % que multiplican la tasa de crecimiento poblacional del predictor actual. No equivalen a aumentar directamente la demanda en esos porcentajes.
 - Tabla con búsqueda, acceso por teclado, estados de carga/error/reintento y protección frente a respuestas fuera de orden. En móvil el gráfico conserva etiquetas legibles con desplazamiento interno.
 
-La API todavía omite planta y candidatos: la página complementa su geometría/costos/capacidades con los CSV versionados, comprobando coincidencia con los barrios y tendidos recibidos. No calcula predicciones ni algoritmos. Si la red no coincide, descarta ese complemento. La aplicación no contiene un fallback a resultados simulados. El suministro y el déficit total no se muestran porque el contrato todavía no los incluye.
+La API actual aporta planta, candidatos, todos los flujos y resumen. La página prioriza esos datos y muestra el balance real. Conserva un complemento de geometría CSV para respuestas antiguas coincidentes, sin predicciones ni algoritmos. No hay fallback a resultados simulados ante fallos de API.
 
 La interfaz está verificada localmente con la API desplegada. Su publicación en Vercel sigue pendiente.
 
-**Avance de cierre del frontend:** cada tendido seleccionado muestra su caudal y utilización en el gráfico, o indica **Sin dato**. Se preparó un panel de demanda, suministro, déficit y cobertura para el campo opcional `resumen_capacidad`, validando consistencia antes de presentarlo. El contrato se documenta en [docs/contrato-api.md](docs/contrato-api.md). El servicio actual todavía no entrega ese resumen ni todos los flujos: la pantalla informa diagnóstico incompleto. La integración final sigue pendiente de datos reales del backend, sin activar ejemplos en producción.
+**Integración verificada:** cada tendido seleccionado muestra caudal/utilización y el panel presenta demanda, abastecimiento y déficit de `resumen_capacidad`, validando su consistencia. El contrato está en [docs/contrato-api.md](docs/contrato-api.md). En la revisión actual no hubo tramos Sin dato; ese estado y el diagnóstico incompleto se conservan para respuestas parciales. No se modificó el frontend para consumir la respuesta completa de Matías.
 
 ## 6. Pruebas y resultados
 
 **Ejecución de la Red de Menor Costo reportada por Matías:**
 Al ejecutar el algoritmo sobre las 26 aristas candidatas generadas, el sistema seleccionó exitosamente 16 conexiones (el mínimo necesario para conectar la planta y los 16 barrios sin formar ciclos). El costo total proyectado para esta obra fue de 73066.05 unidades.
 
-**Ejecución de Diagnóstico de Capacidad reportada por Matías:**
+**Registro histórico de diagnóstico reportado por Matías, distinto del caso actual:**
 Se realizó una simulación base incrementando artificialmente el consumo histórico en un 20% para forzar el comportamiento de la red. Los resultados demostraron que el sistema detecta correctamente los cuellos de botella:
 - **Agua requerida:** 2351.52 m³/día.
 - **Agua abastecida (Flujo Máximo):** 1441.97 m³/día.
 - **Diagnóstico:** Déficit hídrico. La red de menor costo no posee la capacidad suficiente para esta demanda proyectada.
 - **Tramos Críticos:** Se reportaron 2 aristas saturadas al 100% de su capacidad: `Z01 <-> Z05` (1200 m³/día) y `Z05 <-> Z06` (750 m³/día).
 
-Estos valores corresponden a la ejecución de backend descrita por Matías, con consumo alterado para el ejemplo; no son el escenario base HTTP actual. Se incorporaron 10 pruebas automatizadas en `backend/tests/` que validan de forma matemática y reproducible las invariantes de Kruskal (aciclicidad, conectividad y costo óptimo), el caso controlado PLANTA–A–B de Edmonds–Karp (abastecido y con déficit), y la conservación de flujo en cada barrio.
+Esas cifras se conservan como registro de la ejecución descrita por Matías, con consumo alterado; no se reprodujeron en esta revisión ni son el escenario HTTP base actual. Los resultados actuales se presentan más abajo.
 
-**Verificación del backend (08/11/2026):** 10 pruebas unitarias aprobadas mediante `python -m unittest discover -s backend/tests -v`. Cubren conectividad de datos sintéticos, operaciones de `UnionFind`, casos pequeños conocidos, el caso de prueba PLANTA–A–B de `contrato-api.md`, balance de abastecimiento del pipeline y validaciones del endpoint API.
+**Verificación del backend:** 22 pruebas aprobadas mediante `.venv\Scripts\python.exe -m unittest discover -s backend/tests -v`. Cubren datos, Union-Find, Kruskal productivo con costo conocido e invariantes de la red real, flujo conocido PLANTA–A–B, conservación, pipeline y regresiones de inferencia/métricas/desconexión. Los tests de rutas llaman funciones directamente; la verificación HTTP se realiza por separado. El detalle de los problemas y sus correcciones está en la sección de errores de IA.
 
-**Verificación del frontend e integración real (08/11/2026):** 33 pruebas aprobadas de contrato, cliente e interacción. Cubren datos inválidos, capacidades incompatibles, HTTP fallido y timeout, cero frente a dato ausente, respuestas desordenadas, error/reintento, conservación del escenario anterior, etiquetas de todos los tendidos y balances inconsistentes. Pasaron lint y build con TypeScript estricto. Estas pruebas no validan los algoritmos del backend.
+Se reprodujeron en memoria las métricas de ambos modelos con los datos y split declarados, sin sobrescribir el modelo ni los JSON versionados; coinciden con la tabla de la sección 3. La instalación nueva del backend en `.venv` y la ejecución de la suite pasaron con Python 3.12.10 y scikit-learn 1.9.1.
+
+**Verificación del frontend e integración real:** 33 pruebas aprobadas de contrato, cliente e interacción. Cubren datos inválidos, capacidades incompatibles, HTTP fallido y timeout, cero frente a dato ausente, respuestas desordenadas, error/reintento, conservación del escenario anterior, etiquetas de todos los tendidos y balances inconsistentes. Pasaron lint y build con TypeScript estricto. Estas pruebas no validan los algoritmos del backend.
 
 Un caso mínimo exclusivo de tests fija demandas A=20/B=30 y obtiene suministro 50/déficit 0; otra respuesta fija A=26/B=39 y suministro 61/déficit 4 sobre capacidades PLANTA–A=70/A–B=35. La interfaz presenta ambos balances y cambia el diagnóstico al recibirlos. Son respuestas controladas con resultado conocido; no son predicciones del modelo ni pruebas ejecutadas contra el servicio publicado.
 
-En Edge con Render real se comprobaron 17 nodos dibujados, 26 conexiones candidatas y 16 tendidos MST. La demanda base sumada fue 2167.74 m³/día, con costo 73066.05 unidades. El escenario de +30 % en la tasa mostró 2242.3 m³/día. Se verificaron 16 etiquetas de tendidos: solo se recibieron dos registros de flujo en base; 14 quedan como Sin dato y el diagnóstico como incompleto. A 390 px no se observó desbordamiento horizontal de la página. Se renovaron las capturas tras retirar el indicador live y añadir caudales.
+En Edge con Render real se comprobaron 17 nodos, 26 candidatos, 16 tendidos y 16 caudales, sin tramos Sin dato. La pantalla muestra déficit en los tres escenarios. A 390 px no se observó desbordamiento horizontal de la página. Se renovaron las capturas con el contrato completo.
 
-La instalación de dependencias pasó con `npm ci` offline en una copia aislada y el lockfile entregado. Sus pruebas/build no pudieron completarse por permisos de Windows; las comprobaciones aprobadas corresponden al proyecto principal. El arranque desde otra máquina y la demo con el contrato final siguen pendientes.
+| Escenario de tasa poblacional | Demanda m³/día | Abastecido m³/día | Déficit m³/día |
+| --- | --- | --- | --- |
+| Base | 2167.74 | 1435.18 | 732.56 |
+| +10 % | 2192.58 | 1439.69 | 752.89 |
+| +30 % | 2242.26 | 1448.71 | 793.55 |
+
+Los tres POST respondieron HTTP 200 con contrato completo. En base se observó una arista saturada; una asignación de flujo distinta a la histórica puede ser igualmente máxima. No se interpreta que un tramo con flujo cero esté sin información ni que el objetivo garantice reparto equitativo entre barrios.
+
+Se fijaron versiones de dependencias Python compatibles con el modelo y Node 24.x con lockfile para frontend. En una copia separada, con `.venv` y `node_modules` nuevos, pasaron instalación, `pip check`, 22 pruebas backend, 33 frontend, lint y build con TypeScript. npm usó la caché disponible; los permisos adecuados resolvieron el bloqueo de la comprobación anterior. La integración con el contrato completo ya se verificó en la página local y Render; falta repetir el arranque y recorrido desde otra computadora y publicar el frontend previsto.
 
 Capturas de esa revisión, sin resultados fabricados:
 
 - [Tendidos y detalle](docs/capturas/tendidos-escritorio.png).
-- [Capacidad y tramos sin dato](docs/capturas/capacidad-escritorio.png).
+- [Capacidad, caudales y déficit real](docs/capturas/capacidad-escritorio.png).
 - [Gráfico en móvil](docs/capturas/red-movil.png).
 
 ## 7. Uso de inteligencia artificial
@@ -135,6 +145,7 @@ Esta sección se actualiza durante el desarrollo, como solicita el enunciado (p�
 | Gemini | Apoyo a la arquitectura del backend y al diseño de API/esquemas, según el registro del grupo. Organización de los módulos `ml/`, `grafos/`, `api/` y contratos JSON para coordinar a los integrantes. |
 | [Paletas de Colores](https://paletasdecolores.com.ar/) | Ciro usó esta herramienta para elegir la paleta `#44749d`, `#c6d4e1`, `#ffffff`, `#ebe7e0`, `#bdb8ad`, que después entregó al asistente para implementar los estilos. |
 | Figma | Ciro lo exploró de forma preliminar para consultar diseños de páginas de temática parecida como referencia visual. No se afirma que se haya creado un prototipo completo ni utilizado funciones de IA. |
+| [React Bits](https://reactbits.dev/) | Ciro eligió HoloCard, LatticeLoader y una referencia de TechText. Se integraron los dos primeros como código externo TypeScript/CSS adaptado con Codex, sin dependencias nuevas. TechText se dejó sin aplicar por no corresponder al grafo. La carta Pikachu procede de la demo oficial: no fue creada por el grupo ni por IA. Se conserva procedencia y licencia en `frontend/THIRD_PARTY_NOTICES.md`. |
 | Proyecto web personal anterior de Ciro | Según su declaración, aportó inspiración y patrones de organización, pruebas y documentación para reducir la repetición de errores ya encontrados. Se incorporan como antecedente solo los aspectos presentes en este trabajo, detallados a continuación; no se atribuye a IA la autoría de su código previo. |
 
 El aporte del asistente al frontend partió de un esqueleto principal y se fue ajustando a la consigna, la paleta elegida y las indicaciones de Ciro. Del proyecto personal anterior se tomaron como referencia los aspectos que tienen correspondencia en el repositorio actual:
@@ -160,10 +171,25 @@ Los siguientes ejemplos resumen instrucciones de la conversación; se normalizó
 - Armar un contexto para agentes de código que se mantenga actualizado con las áreas de página, datos, ML, grafos y API.
 - Crear la página usando la paleta proporcionada y mantener las predicciones y los algoritmos en el backend.
 - Agregar pruebas de cosas que importan y detecten errores, evitando tests hechos únicamente para que pasen.
+- Incorporar HoloCard en una pestaña especial y un indicador LatticeLoader durante el cálculo; aplicar TechText al grafo solo si resulta adecuado y consultar otras mejoras visuales.
 
 Como ejemplo registrado para Gemini se conserva: «dame una estructura del proyecto (carpetas, archivos, etc) como para ir armando la base antes de hacer cualquier codigo».
 
-### Desacierto visual detectado y corrección
+### Errores de la IA detectados y cómo los resolvimos
+
+Durante el desarrollo asistido por IA detectamos propuestas de código y pruebas que necesitaban corrección. El grupo revisó su comportamiento, reprodujo los problemas y aplicó los ajustes siguientes. Se documentan aquí como aprendizaje del uso de IA, sin atribuirlos como errores personales de un integrante.
+
+| Error detectado | Cómo lo detectamos | Cómo lo resolvimos y verificamos |
+| --- | --- | --- |
+| Codificación categórica dependiente del lote | La misma zona industrial daba 10113.16 m³/mes individualmente y 10128.63 dentro de las 16 zonas. `drop_first=True` eliminaba la única categoría de una consulta individual. | En inferencia generamos las dummies sin eliminar categorías y alineamos con las columnas del modelo entrenado. Rechazamos tipos de zona fuera de los admitidos en el endpoint. Las pruebas comprueban igualdad entre predicciones individuales, lotes por tipo y lote completo para las tres categorías; el endpoint también conserva el resultado. No fue necesario reentrenar el modelo. |
+| Prueba nueva de carga bloqueada por el reloj simulado | La prueba del loader agotó su tiempo por combinar el reloj simulado con la interacción asíncrona. TypeScript también detectó una opción de consulta no admitida en el test. | Se retiró la opción inválida y se separó la activación del evento del avance explícito del reloj. La prueba comprueba reinicio del contador, descarte de respuestas antiguas y retiro del loader ante error/éxito, manteniendo las aserciones de comportamiento. Pasaron las 37 pruebas frontend, lint, TypeScript y build. |
+| Métricas fijas sin archivo de evaluación válido | Simulamos archivo ausente, JSON roto, campos incompletos y valores no finitos; la propuesta anterior devolvía cifras constantes o inválidas. | Quitamos los valores de respaldo y centralizamos lectura/validación del archivo real. Si no hay métricas válidas se devuelve `null`; la simulación sigue disponible y la página informa su ausencia. Se probaron ambas rutas, datos inválidos y un archivo válido con R² negativo. |
+| Una prueba repetía Kruskal en vez de comprobar la función del proyecto | Al leer el test vimos otro bucle de ordenamiento y Union-Find dentro de la prueba: podía pasar aunque fallara la función utilizada por la API. | Reemplazamos ese bucle por un CSV temporal y una llamada a `calcular_red_menor_costo`. La expectativa independiente sigue siendo costo 6, tres aristas y árbol conexo sin ciclos. |
+| Una red desconectada se presentaba como resultado completo | Un caso con PLANTA–A y B–C devolvía dos componentes sin avisar que no se conectaban todos los nodos. | Kruskal ahora verifica conexión de todos los nodos, incluidos los declarados sin aristas, y rechaza redes vacías/desconectadas. Pipeline y consulta MST pasan los nodos esperados; la API informa indisponibilidad con HTTP 503. Se agregaron casos de regresión para cada situación. |
+
+Las pruebas de regresión reprodujeron los fallos antes de aplicar las correcciones. Después pasaron las **22 pruebas del backend**, incluyendo el test de Kruskal que ahora llama al código real. Los cambios se agrupan en commits locales por tema; el usuario realiza el push y todavía falta verificar las correcciones desplegadas. El estado de verificación está en [verificacion-proyecto.md](docs/verificacion-proyecto.md).
+
+**Desacierto visual del frontend:**
 
 El único desacierto visual del frontend señalado por Ciro hasta esta revisión fue el indicador de estado tipo «live», que mostraba «Consultando API / API conectada», acompañado por la hora de última respuesta. El asistente lo agregó como parte de la presentación, pero Ciro consideró que no aportaba a la página y pidió quitarlo. Se eliminaron el distintivo y la hora; se conservan mensajes sencillos de cálculo y error para entender el estado de la simulación.
 
@@ -179,15 +205,20 @@ Después de quitar el indicador pasaron nuevamente las 22 pruebas del frontend, 
 
 ## 8. Limitaciones y posibles extensiones
 
+Los efectos elegidos por Ciro se integraron sin alterar el cálculo de la red: HoloCard queda en una pestaña de exploración, cargada al abrirla, y LatticeLoader solo aparece durante solicitudes reales. Su contador incluye espera de red/servidor y no indica porcentaje de progreso. Se adaptaron textos en español, movimiento reducido y alternativa de imagen cuando no hay WebGL. La revisión en Edge comprobó reflejos/inclinación, pausa, móvil sin desbordamiento y regreso a Capacidad con 17 nodos/16 caudales de Render. Detalle: [efectos visuales](docs/efectos-visuales.md).
+
 - Los datos no son mediciones reales: las métricas indican aprendizaje de las reglas sintéticas y no validan un sistema de abastecimiento real.
 - Se usan promedios diarios obtenidos de un mes convencional de 30 días; no se modelan picos horarios, estacionalidad ni incertidumbre de las predicciones.
 - La red representa capacidades y conectividad, no una simulación hidráulica de presiones, pérdidas de carga, diámetros o bombas.
 - Se minimiza costo de conexión y luego se valida capacidad. El sistema todavía no propone ampliaciones ni optimiza simultáneamente costo y abastecimiento.
-- El contrato del backend y su suite de pruebas se encuentran completados en el código local, devolviendo geometría, 16 flujos y resumen de balance; resta desplegar esta versión en Render y comprobar la integración final en producción.
+- El contrato completo ya está publicado en Render y verificado desde la página local. La publicación del frontend sigue pendiente.
+- Se corrigieron localmente la inferencia por categorías, métricas de respaldo, test duplicado y control de desconexión; el detalle de error/detección/solución está en la sección de uso de IA. Falta publicar estas correcciones y repetir su validación por HTTP.
+- Falta separar selección/evaluación final de ML y profundizar análisis de errores. Las dependencias compatibles ya están fijadas; falta comprobar la instalación en otra computadora.
+- El flujo máximo prioriza cantidad total abastecida, sin restricciones de equidad. Un barrio puede recibir cero aunque la solución sea máxima; analizar reparto por zona sería una extensión.
 - Posibles extensiones: datos reales adaptados y citados, curvas horarias, comparación de escenarios, incertidumbre, alternativas para reforzar tramos y análisis de costos de ampliación.
 
 ## 9. Instalación y ejecución
 
-Las instrucciones están en [README.md](README.md) y [frontend/README.md](frontend/README.md). La página local usa la API ya desplegada en Render; falta comprobar el arranque completo desde un entorno limpio, fijar dependencias del backend y completar la publicación prevista en Vercel.
+Las instrucciones están en [README.md](README.md), [frontend/README.md](frontend/README.md) y la [guía de instalación reproducible](docs/instalacion-reproducible.md). Las versiones están fijadas y se verificaron backend/frontend en una copia nueva, sus pruebas y compilación, además de la página local con Render. Falta comprobar el recorrido completo en otra computadora y completar la publicación prevista en Vercel; su configuración de build ya está preparada.
 
 El enunciado exige demo end-to-end e instrucciones reproducibles; no exige contratar servicios, un dominio, AWS Lambda ni publicar en un proveedor determinado. Vercel + Render es una decisión del grupo.

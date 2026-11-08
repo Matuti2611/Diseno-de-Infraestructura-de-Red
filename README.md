@@ -5,16 +5,19 @@
 - [Contexto actualizado del proyecto](docs/context.md): estado real de página, datos, ML, grafos, API y pruebas; debe revisarse y actualizarse ante cambios importantes, commits y push.
 - [Plan de arquitectura del frontend](docs/plan-frontend.md): alcance aprobado, flujos, contrato, decisiones y estado de implementación.
 - [Guía de la página](frontend/README.md): instalación, ejecución, estructura, pruebas y límites de la API.
+- [Efectos visuales](docs/efectos-visuales.md): HoloCard con Pikachu, loader de solicitudes, adaptaciones y procedencia de React Bits.
+- [Instalación reproducible](docs/instalacion-reproducible.md): versiones, instalación desde cero y comprobaciones para otra computadora.
 - [Revisión de la consigna](docs/revision-consigna.md): requisitos del PDF, evidencia actual y pendientes de frontend, backend e informe.
-- [Contrato de capacidad para integrar con Matías](docs/contrato-api.md): todos los flujos y resumen de suministro/déficit; extensión propuesta y cubierta en frontend, todavía pendiente del backend.
+- [Contrato de capacidad](docs/contrato-api.md): geometría, todos los flujos y balance; implementado por ambos lados y verificado en Render.
+- [Verificación técnica del proyecto](docs/verificacion-proyecto.md): estado, comprobaciones y próximos pasos. Los errores y su resolución se registran en la sección de IA del informe.
 - [Guía de despliegue](docs/despliegue.md): Vercel para la página y Render para la API, configuración prevista y pasos pendientes antes de publicar.
 - [Instrucciones para agentes de código](AGENTS.md): lectura del contexto, mantenimiento de documentación y criterios de trabajo y pruebas.
 
-API desplegada en Render: [documentación interactiva](https://infraestructura-red-api.onrender.com/docs). La página local ya consume esa API, con vistas Tendidos y Capacidad y escenarios de crecimiento. El 08/11/2026 se verificó el recorrido real desde el navegador. Las pruebas matemáticas del backend y los campos completos de suministro/déficit todavía deben completarse con Matías.
+API desplegada en Render: [documentación interactiva](https://infraestructura-red-api.onrender.com/docs). Se verificaron 17 nodos, 26 candidatos, 16 flujos y balance completo en tres escenarios. La página muestra esos datos sin tramos Sin dato. Localmente se corrigieron y probaron los casos documentados en «Errores de la IA» del informe: 22 tests backend y 37 frontend aprobados. Esas correcciones siguen pendientes de publicación; faltan despliegue y cierre de entrega.
 
 ## Probar la página
 
-Con Node 22.12 o posterior (probado con 24.20.0), desde la raíz:
+Con Node 24.x (probado con 24.20.0, indicado en `frontend/.nvmrc`), desde la raíz:
 
 ```powershell
 cd frontend
@@ -22,7 +25,25 @@ npm.cmd ci
 npm.cmd run dev
 ```
 
-Abrir `http://127.0.0.1:5173`. Usa Render sin tener que ejecutar Python localmente. La primera respuesta puede demorarse después de inactividad. Para verificar: `npm.cmd test`, `npm.cmd run lint` y `npm.cmd run build` (incluye TypeScript). Hay 33 pruebas relevantes del frontend aprobadas; no sustituyen los tests del backend. El gráfico ya muestra caudales y el panel de abastecimiento está preparado para el resumen propuesto. La integración completa espera los campos del backend; luego se verifica la demo y la publicación prevista en Vercel.
+Abrir `http://127.0.0.1:5173`. Usa Render sin tener que ejecutar Python localmente. La primera respuesta puede demorarse después de inactividad. Para verificar: `npm.cmd test`, `npm.cmd run lint` y `npm.cmd run build` (incluye TypeScript). Las 37 pruebas del frontend no sustituyen los tests del backend. El gráfico y el panel muestran caudales y balance reales. La publicación prevista en Vercel sigue pendiente de autorización y verificación.
+
+## Ejecutar el backend localmente
+
+Con Python 3.12.10 (indicado en `.python-version`), desde la raíz del repositorio y en otra terminal:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
+.venv\Scripts\python.exe -m pip check
+.venv\Scripts\python.exe -m unittest discover -s backend/tests -v
+.venv\Scripts\python.exe -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
+```
+
+Abrir `http://127.0.0.1:8000/docs`. Para conectar la página a este backend, usar `VITE_API_URL=http://127.0.0.1:8000` en `frontend/.env.local` y reiniciar Vite. No hace falta activar el entorno virtual en PowerShell ni cambiar su política de scripts.
+
+CSV y modelo ya están versionados: no hay que generarlos ni entrenar al arrancar. Para reentrenar intencionalmente, ejecutar desde la raíz `.venv\Scripts\python.exe -m backend.app.ml.entrenar`; sobrescribe el modelo y las métricas, por lo que deben revisarse juntos antes de publicar. Las rutas actuales requieren ejecutar el backend desde la raíz.
+
+`backend/requirements.txt` fija dependencias directas y transitivas del entorno comprobado, incluido scikit-learn 1.9.1, compatible con el artefacto. Antes de incorporar los efectos, en una copia separada con `.venv` y `node_modules` nuevos pasaron instalación, `pip check`, 22 pruebas backend, las 33 frontend de esa etapa, lint y build con TypeScript. Los efectos no añaden paquetes y la suite actual tiene 37 pruebas frontend aprobadas. No equivale a probar otra computadora: ese ensayo sigue pendiente y tiene una [guía de comprobación](docs/instalacion-reproducible.md).
 
 ## Primer paso: generar los datos del caso sintético
 
@@ -34,7 +55,7 @@ python backend/app/data/generar_dataset.py
 
 El comando genera en `backend/data/raw/` cuatro CSV: `planta.csv`, `zonas.csv`, `historial_consumo.csv` y `aristas_candidatas.csv`. Usa una semilla fija (`42`) para que el resultado sea reproducible. Se pueden cambiar la semilla y el tamaño del historial con `--semilla` y `--muestras`. Las reglas y unidades están documentadas en [Informe.md](Informe.md).
 
-Matías incorporó el entrenamiento, un modelo exportado, cálculos de MST y flujo mediante NetworkX y el endpoint `POST /api/simular-red`. La página está integrada con esa respuesta; identifica explícitamente los flujos ausentes y complementa la geometría candidata con los CSV versionados, sin inventar resultados. Faltan pruebas del backend y completar el contrato. El estado y las limitaciones verificadas están en [docs/context.md](docs/context.md).
+Matías incorporó entrenamiento, modelo exportado, Kruskal y Edmonds–Karp manuales y el endpoint `POST /api/simular-red`. NetworkX representa los grafos y sirve de referencia para comprobar totales. La página usa la geometría completa y los 16 flujos de la API actual; conserva compatibilidad explícita con respuestas antiguas. El estado y las limitaciones están en [docs/context.md](docs/context.md).
 
 Para comprobar la reproducibilidad y conectividad del grafo generado:
 
@@ -146,9 +167,9 @@ Módulo encargado de la lógica de negocio, algoritmos de grafos, machine learni
 
 * **`app/grafos/`** (Algoritmos de Redes):
   * **`construir.py`**: Instancia el grafo con NetworkX, integrando nodos (demandas) y aristas (costos/capacidades).
-  * **`mst.py`**: Calcula el MST mediante NetworkX. Revisar la implementación propia de Kruskal o Prim requerida para cumplir claramente la consigna.
+  * **`mst.py`**: Kruskal manual con Union-Find; compara el costo con NetworkX y controla redes vacías, desconectadas o con nodos declarados aislados.
   * **`union_find.py`**: Estructura de datos de conjuntos disjuntos, esencial si se utiliza el algoritmo de Kruskal.
-  * **`flujo.py`**: Construye la red dirigida con supersumidero y calcula el flujo máximo mediante NetworkX. Falta revisar la implementación propia y la selección explícita de Edmonds-Karp.
+  * **`flujo.py`**: Edmonds–Karp manual con BFS y flujo residual; compara el total con NetworkX.
   * **`diagnostico.py`**: Funciones para analizar qué aristas se encuentran saturadas o cerca de su límite operativo (ej. ≥90% de capacidad).
 
 * **`app/servicios/`**:
@@ -159,7 +180,7 @@ Módulo encargado de la lógica de negocio, algoritmos de grafos, machine learni
   * **`data/processed/`**: Carpeta para los datos limpios y procesados listos para el entrenamiento.
   * **`models/`**: Almacena el modelo de Machine Learning exportado (ej. `.joblib`) y sus métricas en formato `.json`.
   * **`notebooks/exploracion.ipynb`**: Cuaderno de Jupyter utilizado para el Análisis Exploratorio de Datos (EDA) y experimentación de modelos.
-  * **`tests/`**: Pruebas unitarias y de integración. `test_datos.py` comprueba los datos sintéticos; `test_mst.py`, `test_flujo.py` y `test_pipeline.py` están pendientes.
+  * **`tests/`**: 22 pruebas de datos, MST productivo, flujo, pipeline, auxiliares y regresiones de los casos corregidos durante el trabajo asistido por IA.
 
 ### 3. Frontend (React / Vite / TypeScript)
 Interfaz de usuario para visualizar los grafos, interactuar con los escenarios de predicción y ver el diagnóstico de la red.

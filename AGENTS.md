@@ -13,11 +13,12 @@ Estas instrucciones aplican a todo el repositorio.
 
 `docs/context.md` es un documento vivo y debe actualizarse cada vez que haya un cambio importante: funcionalidad nueva, cambio de contrato o arquitectura, dependencia, resultado de pruebas, bloqueo o cambio de responsabilidades.
 
-- Antes de cada commit y de cada push, revisar el contexto y actualizar las secciones afectadas dentro del mismo conjunto de cambios. No limitarse a cambiar la fecha.
+- Antes de cada commit y de cada push, revisar el contexto y actualizar las secciones afectadas dentro del mismo conjunto de cambios. Actualizar el estado y las verificaciones, no solo metadatos.
 - Registrar qué funciona, qué está propuesto, qué falta, qué se verificó y el próximo paso concreto. Mantener secciones diferenciadas para página, datos, ML, grafos, API y pruebas.
 - Comprobar el resultado de commit/push antes de afirmar que se realizó. Una referencia local `origin/main` no demuestra que se consultó el remoto en esa sesión.
-- Si un commit o push cambia un bloqueo o estado de sincronización relevante, reflejarlo en el contexto. Evitar cadenas de commits cuya única finalidad sea actualizar el hash del propio documento.
+- Si un commit o push cambia un bloqueo o estado de sincronización relevante, reflejarlo en el contexto. No crear commits destinados únicamente a mantener referencias administrativas.
 - Describir el estado actual y conservar solo las decisiones históricas que ayuden a entenderlo. No guardar secretos, tokens ni rutas personales necesarias solo en una máquina.
+- Mantener la documentación ordenada por temas, sin fechas exactas ni hashes de commits. Conservar versiones de herramientas, comandos y resultados técnicos necesarios para reproducir el proyecto; el historial detallado se consulta en Git.
 
 ## Implementación y pruebas
 

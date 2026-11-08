@@ -4,7 +4,7 @@ Panel en React + TypeScript estricto + Vite. Usa la API real de Render para most
 
 ## Ejecutar
 
-Requiere Node 22.12 o posterior; verificado con Node 24.20.0 y npm 11.19.0. Desde la raíz:
+Requiere Node 24.x; verificado con Node 24.20.0 y npm 11.19.0. `.nvmrc` registra la versión local y `package.json` fija la versión mayor para Vercel. Desde la raíz:
 
 ```powershell
 cd frontend
@@ -24,10 +24,11 @@ El servicio de Render puede tardar en responder después de inactividad. La inte
 - Solicitar escenarios base, +10 % y +30 %. Estos valores multiplican la **tasa de crecimiento poblacional** usada por el predictor; no aumentan directamente la demanda en ese porcentaje.
 - Ver demanda proyectada, costo del MST y utilización de los tramos informados por la API.
 - Consultar las métricas enviadas por el backend y las limitaciones del caso sintético.
+- Abrir «Efectos» para ver la carta holográfica de Pikachu, independiente de los resultados. Durante las solicitudes aparece LatticeLoader con tiempo de espera; desaparece al terminar y no mide el avance del algoritmo.
 
-La API actual devuelve 16 barrios y 16 tendidos, pero solo dos registros de flujo en el escenario base. Cada tendido seleccionado tiene una etiqueta de caudal y utilización en el gráfico; los otros 14 se identifican como **Sin dato**, sin asumir cero. Las etiquetas verticales se ubican al costado para preservar los nombres de los nodos. Se distingue utilización desde 90 % de saturación al 100 % mediante el cociente flujo/capacidad.
+La API actual devuelve planta y 16 barrios, 26 candidatos y 16 tendidos con sus 16 registros de flujo. Cada tendido seleccionado tiene etiqueta de caudal/utilización; un cero informado se muestra como cero. **Sin dato** queda reservado para respuestas incompletas, sin asumir cero. Las etiquetas verticales se ubican al costado para preservar los nombres. Se distingue cercanía desde 90 % de saturación al 100 % mediante flujo/capacidad.
 
-El panel de abastecimiento ya está preparado para mostrar demanda, suministro, déficit y cobertura mediante la extensión opcional `resumen_capacidad`. Esa extensión todavía no existe en Render: hoy muestra **Diagnóstico incompleto**, incluso si se conocen todos los caudales, porque no deduce suministro sumando cañerías. El contrato propuesto y un caso de prueba para Matías están en [docs/contrato-api.md](../docs/contrato-api.md). Se valida que los totales coincidan con las demandas y el balance antes de presentarlos.
+El panel usa el `resumen_capacidad` real de Render para mostrar demanda, suministro, déficit y cobertura. En base se verificaron 2167.74/1435.18/732.56 m³/día: la red no cubre toda la demanda. Se valida consistencia con nodos y balance. Si una respuesta omite el resumen se mantiene **Diagnóstico incompleto**; no se deduce suministro sumando cañerías. Ver [contrato y caso de prueba](../docs/contrato-api.md).
 
 ## Archivos y fuentes
 
@@ -39,7 +40,7 @@ El panel de abastecimiento ya está preparado para mostrar demanda, suministro, 
 - `src/styles/global.css`: paleta elegida, estados, foco y diseño adaptable. En móvil el gráfico y la tabla tienen desplazamiento horizontal interno para mantener legibles sus etiquetas.
 - `src/tests/`: pruebas de contrato, red e interacción; los JSON de prueba no participan en la aplicación publicada.
 
-Como la API todavía omite la planta y las conexiones candidatas, `src/data/casoRed.json` incluye sus coordenadas, costos y capacidades desde los CSV versionados del backend. **No incluye predicciones ni resultados simulados.** Solo se usa cuando los barrios y tendidos recibidos coinciden con el caso local; si no coinciden, se muestra únicamente la red recibida y se avisa si faltan coordenadas. Cuando el servidor entregue `tendidos_candidatos`, se priorizarán esos datos.
+La API actual aporta planta y candidatos, que se priorizan al dibujar. `src/data/casoRed.json` conserva geometría/costos/capacidades CSV como compatibilidad con la respuesta anterior, solo tras comprobar coincidencia del caso. **No contiene predicciones ni resultados simulados** y no sustituye una API fallida. Si cambia la red sin geometría completa se descarta el complemento y se avisa si faltan coordenadas.
 
 Si Matías cambia los CSV, actualizar esta copia desde la raíz y revisar el diff:
 
@@ -60,14 +61,20 @@ npm.cmd run typecheck
 npm.cmd run build
 ```
 
-El 08/11/2026 pasaron 33 pruebas, lint y build (que incluye TypeScript). Las pruebas detectan datos inválidos, flujos imposibles, respuestas HTTP fallidas, espera agotada, confusión entre cero y dato ausente, escenarios desordenados, reintento y pérdida del resultado anterior. También verifican búsqueda/teclado, caudales de tramos no críticos y cambio de cobertura a déficit con respuestas controladas. Se rechazan resúmenes que contradicen la demanda o el balance y candidatos con costos/capacidades distintos del MST. Son pruebas del frontend; no demuestran la corrección matemática del backend.
+Pasaron 37 pruebas, lint y build (que incluye TypeScript). Las pruebas detectan datos inválidos, flujos imposibles, respuestas HTTP fallidas, espera agotada, confusión entre cero y dato ausente, escenarios desordenados, reintento y pérdida del resultado anterior. También verifican búsqueda/teclado, caudales de tramos no críticos y cambio de cobertura a déficit con respuestas controladas. Se rechazan resúmenes que contradicen la demanda o el balance y candidatos con costos/capacidades distintos del MST. Las nuevas pruebas de efectos cubren reinicio/limpieza del contador, retiro ante error/éxito, imagen sin WebGL y navegación sin nuevas simulaciones. Son pruebas del frontend; no demuestran la corrección matemática del backend.
 
-Se probó en Edge con Render real: 17 nodos, 26 conexiones candidatas, 16 tendidos seleccionados, demanda base 2167.74 m³/día y escenario +30 % con 2242.3 m³/día mostrados. A 390 px no hay desbordamiento horizontal de la página; el gráfico mantiene su desplazamiento interno. Capturas en [docs/capturas](../docs/capturas/).
+Se repitió la prueba en Edge con Render real tras los cambios de Matías: 17 nodos, 26 candidatos, 16 etiquetas con caudal (cero Sin dato), déficit base 732.56 m³/día y demanda +30 % mostrada como 2242.3 m³/día. A 390 px no hay desbordamiento horizontal de la página; el gráfico mantiene desplazamiento interno. Se renovaron las [capturas](../docs/capturas/). No se cambió código frontend para consumir el contrato completo.
 
-La instalación con `npm.cmd ci --offline --no-audit --no-fund` pasó en una copia aislada con el lockfile y caché disponibles. La compilación/pruebas de esa copia quedaron bloqueadas por permisos del entorno Windows (esbuild en aislamiento y lectura de archivos al elevar); no se declaran aprobadas allí. Falta el ensayo en otra máquina. El proyecto principal tiene sus comprobaciones aprobadas.
+Antes de incorporar los efectos, en una copia separada sin reutilizar `node_modules`, pasaron `npm.cmd ci --offline --no-audit --no-fund`, las 33 pruebas de esa etapa, lint y build con TypeScript. Los efectos no agregan paquetes. Se usó la caché disponible; una computadora nueva necesita acceso al registro para `npm ci`. Los permisos adecuados resolvieron el bloqueo de la comprobación anterior. Falta el ensayo en otra máquina; seguir la [guía de instalación reproducible](../docs/instalacion-reproducible.md).
 
 `package-lock.json` fija la instalación. Los overrides de `minimatch` están limitados a herramientas de lint para resolver el aviso GHSA-g3hv-75wg-m249 de la versión transitiva anterior; se comprobó el árbol instalado y el lint con la versión 11.0.5. La instalación final informó cero vulnerabilidades conocidas. Los artefactos de QA y perfiles temporales quedan ignorados en `.preview/` y excluidos del watcher de Vite.
 
 ## Vercel
 
-Preparado para raíz `frontend`, preset Vite, build `npm run build` y salida `dist`. Usar Node 24.x y `VITE_API_URL=https://infraestructura-red-api.onrender.com`; la variable es pública y se incorpora al compilar. Tras cambiarla hay que reconstruir. Aún no se publicó el frontend: falta importar el repositorio, coordinar CORS con el origen definitivo y verificar la página por HTTPS. Ver [despliegue](../docs/despliegue.md).
+`vercel.json` configura Vite, instalación con `npm ci`, build `npm run build` y salida `dist`. Al importar el repositorio, seleccionar raíz `frontend`, Node 24.x y `VITE_API_URL=https://infraestructura-red-api.onrender.com`; la variable es pública y se incorpora al compilar. Tras cambiarla hay que reconstruir. Aún no se publicó el frontend: falta subir los cambios, importar el repositorio, coordinar CORS con el origen definitivo y verificar la página por HTTPS. Ver [despliegue](../docs/despliegue.md).
+
+## Efectos y procedencia
+
+HoloCard se carga al abrir su pestaña, conserva la imagen sin WebGL y permite pausar el giro. LatticeLoader acompaña únicamente solicitudes reales y reinicia su reloj por escenario/intento. Ambos respetan movimiento reducido. Edge confirmó textura y reflejos, tarjeta sin desbordamiento a 390 px y vuelta a los 17 nodos/16 caudales reales de Render.
+
+Código TypeScript/CSS adaptado de React Bits, sin Tailwind ni dependencias nuevas. TechText se dejó sin aplicar porque transforma texto, no nodos/aristas. Ver [decisiones y archivos](../docs/efectos-visuales.md) y [procedencia/licencia](THIRD_PARTY_NOTICES.md). Otras mejoras visuales se consultan con el usuario.

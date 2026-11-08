@@ -1,14 +1,16 @@
 # Propuesta de página y arquitectura inicial
 
-Fecha inicial: 2026-11-07. Actualización: 2026-11-08. Estado: **página integrada con Render, etiquetas de caudal y panel de abastecimiento preparado para extensión de API**. Pasaron 33 pruebas, lint, TypeScript y build. La publicación en Vercel y completar suministro/déficit en la API siguen pendientes. Este documento conserva la arquitectura y el alcance objetivo; el estado comprobado está en `context.md`.
+Estado: **página integrada con el contrato completo real de Render**, 16 caudales y balance visibles. Pasaron 37 pruebas, lint, TypeScript y build. El cliente admite `metricas_ml: null`, como la corrección local del backend. Faltan publicación de correcciones, Vercel y prueba en otra máquina; ver `verificacion-proyecto.md`. El registro de errores/resoluciones está en la sección de IA del informe.
+
+Ciro aportó referencias de React Bits: se implementó HoloCard con Pikachu en una pestaña especial y LatticeLoader durante la carga real. TechText no se aplicó porque anima letras y no sustituye el SVG interactivo de la red. Sin dependencias adicionales ni Tailwind; detalle en `efectos-visuales.md`. Otras mejoras visuales requieren consulta al usuario. Node 24.x, `.nvmrc` y `vercel.json` ya están preparados. Una instalación nueva anterior a estos efectos pasó las verificaciones; el ensayo en otra computadora sigue pendiente, con pasos en `instalacion-reproducible.md`.
 
 ### Implementación actual frente al plan
 
-Se implementaron las dos vistas, selección SVG/tabla, escenarios, búsqueda, estados de carga/error/reintento y paleta. Se usa API real desde el inicio: el modo demostración propuesto no fue necesario; los fixtures solo se usan en tests. La API solo devuelve flujos críticos: los demás se presentan como **Sin dato**, sin inventar déficit o suministro. Los escenarios multiplican la tasa de crecimiento poblacional, como el predictor actual.
+Se implementaron las dos vistas, selección SVG/tabla, escenarios, búsqueda, carga/error/reintento y paleta. Se usa API real; los fixtures están solo en tests. La API actual entrega todos los caudales y el balance; Sin dato/diagnóstico incompleto se conservan para respuestas parciales. Los escenarios multiplican la tasa de crecimiento poblacional, como el predictor.
 
-Se cerró el pendiente de etiquetas: cada arista del MST muestra caudal/utilización o Sin dato. El panel de abastecimiento ya presenta cobertura/suministro/déficit cuando recibe un `resumen_capacidad` válido; el contrato propuesto está en `contrato-api.md` y no cambió el backend. Sigue pendiente probar los campos reales de extremo a extremo. Ver `revision-consigna.md`. La sección de IA y diseño registra paleta, exploración de Figma y patrones del proyecto previo de Ciro presentes en este alcance.
+Cada arista del MST muestra caudal/utilización o Sin dato. El panel usa el `resumen_capacidad` real, con los campos implementados por Matías. Se comprobaron tres escenarios por HTTP y el recorrido en Edge, sin modificar el frontend. Contrato en `contrato-api.md` y requisitos en `revision-consigna.md`. La sección de IA registra paleta, Figma y patrones previos de Ciro presentes en este alcance.
 
-Temporalmente se complementan planta y candidatos con geometría/costos/capacidades de los CSV versionados (`casoRed.json`), tras comprobar coincidencia con los barrios y MST recibidos. No se generan predicciones ni algoritmos en navegador. Ante otra red se descarta ese complemento. El cliente prioriza candidatos enviados por API cuando estén disponibles. Sincronización y ejecución: `../frontend/README.md`.
+Se priorizan planta y candidatos de la API. La geometría/costos/capacidades CSV (`casoRed.json`) quedan como compatibilidad con respuestas antiguas, solo tras comprobar coincidencia del caso. No se generan predicciones ni algoritmos en navegador. Sincronización y ejecución: `../frontend/README.md`.
 
 ## 1. Objetivo y usuarios
 
@@ -36,7 +38,7 @@ Un único panel con dos vistas: **Tendidos** y **Capacidad**. El encabezado iden
 - Escritorio: grafo y resumen en columnas; tabla debajo. Móvil/tablet: bloques apilados, controles accesibles y tabla con desplazamiento horizontal si hace falta.
 - El grafo tiene leyenda y selección de un nodo/arista con detalle. La tabla ofrece acceso equivalente a la información. Los estados usan texto además de color.
 
-Dirección visual: panel técnico claro, con la paleta compartida por el usuario el 2026-11-08. La prioridad es la lectura del grafo, las cifras y el diagnóstico. Los códigos de efectos decorativos quedan para después, según indicó el usuario.
+Dirección visual: panel técnico claro, con la paleta elegida por el usuario. La prioridad es la lectura del grafo, las cifras y el diagnóstico. Los efectos aprobados se limitan al loader y la tarjeta en una pestaña propia.
 
 Revisión del usuario: evitar distintivos tipo «en vivo» y estados técnicos de API en la cabecera. Se quitaron ese indicador y la hora de respuesta; la carga se comunica con texto sencillo junto al escenario y los fallos con reintento.
 
@@ -72,7 +74,7 @@ El esquema actual de Matías es el punto de partida. Antes de implementar el int
 | Resumen | Demanda total, caudal suministrado, déficit y unidad m³/día |
 | Métricas ML | MAE, RMSE, R² y unidad de los errores; solo resultados reales disponibles |
 
-Matías ya implementó `POST /api/simular-red` para solicitar una simulación. La respuesta actual todavía no expone todas las conexiones candidatas, la planta como nodo, todos los flujos ni el resumen completo. Acordar esas ampliaciones y si habrá una consulta separada de red candidata antes de integrar la página.
+`POST /api/simular-red` ya entrega planta, candidatos, todos los flujos y resumen; se comprobó el contrato completo en Render. Hay consultas auxiliares de red, pero la página obtiene su resultado consistente mediante la simulación única.
 
 También acordar la semántica del escenario: el esquema lo describe como multiplicador de demanda, mientras que el predictor actual multiplica la tasa de crecimiento poblacional. El texto del selector debe reflejar el cálculo efectivo del backend.
 
@@ -119,7 +121,7 @@ Comprobaciones para cerrar una etapa de frontend: tests relevantes, lint, TypeSc
 
 Validar el escenario en servidor; el navegador no determina totales ni capacidades. Mostrar textos como contenido, no interpretar HTML devuelto por la API. No exponer secretos en configuración del frontend. La dirección de la API es configuración pública; CORS se configura en FastAPI para el origen de la página.
 
-Local: desarrollo con API real de Render o dirección local configurable. El usuario eligió Vercel para frontend y Render para FastAPI; ver [despliegue.md](despliegue.md). La página ya consulta `https://infraestructura-red-api.onrender.com` y usa `VITE_API_URL`; se verificaron escenarios reales en navegador el 2026-11-08. Solo su publicación sigue pendiente. No se necesitan pagos, email, uploads ni autenticación para el MVP.
+Local: desarrollo con API real de Render o dirección local configurable. El usuario eligió Vercel para frontend y Render para FastAPI; ver [despliegue.md](despliegue.md). La página consulta `https://infraestructura-red-api.onrender.com` y usa `VITE_API_URL`; los escenarios reales se verificaron en navegador. Su publicación sigue pendiente. No se necesitan pagos, email, uploads ni autenticación para el MVP.
 
 Usar HTML semántico, labels, controles por teclado, foco visible y contraste suficiente. Ofrecer tabla y leyenda como complemento del SVG y mensajes de carga/error comprensibles para tecnologías de asistencia.
 
@@ -172,7 +174,7 @@ La aprobación de este plan habilita su alcance inicial; las ampliaciones sustan
 
 ## Referencias técnicas
 
-Consultadas el 2026-11-07:
+Documentación oficial consultada:
 
 - Vite, opciones de inicio: https://vite.dev/guide/
 - Vite, compilación para hosting estático: https://vite.dev/guide/build
