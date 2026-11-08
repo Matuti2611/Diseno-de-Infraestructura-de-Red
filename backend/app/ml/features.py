@@ -32,7 +32,8 @@ def preparar_features_inferencia(
     X = df_zonas.drop(columns=columnas_a_descartar)
     
     if 'tipo_zona' in X.columns:
-        X = pd.get_dummies(X, columns=['tipo_zona'], drop_first=True)
+        # La categoría base la fija el modelo entrenado, no las filas de esta llamada.
+        X = pd.get_dummies(X, columns=['tipo_zona'], drop_first=False)
         
     # Reindexar para asegurar orden y presencia de todas las dummies del entrenamiento
     X = X.reindex(columns=columnas_esperadas, fill_value=0)

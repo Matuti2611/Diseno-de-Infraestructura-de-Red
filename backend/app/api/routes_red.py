@@ -34,7 +34,8 @@ def obtener_conexiones():
 def obtener_red_menor_costo():
     """Devuelve la red de tendidos de menor costo calculada con Kruskal manual."""
     try:
-        mst, costo_total = calcular_red_menor_costo(RUTA_ARISTAS)
+        nodos = [nodo['id'] for nodo in cargar_todos_los_nodos()]
+        mst, costo_total = calcular_red_menor_costo(RUTA_ARISTAS, nodos_esperados=nodos)
         aristas = [
             {
                 "origen": u,
@@ -50,6 +51,8 @@ def obtener_red_menor_costo():
             "costo_total": round(costo_total, 2),
             "aristas": aristas
         }
+    except ValueError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al calcular MST: {str(e)}")
 

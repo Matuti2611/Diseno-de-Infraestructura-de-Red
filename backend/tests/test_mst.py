@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import unittest
+import tempfile
+from pathlib import Path
 import networkx as nx
 import pandas as pd
 from backend.app.config import RUTA_ARISTAS
@@ -53,25 +55,36 @@ class KruskalMSTTest(unittest.TestCase):
             ("A", "C", 4.0, 100.0),
             ("D", "A", 10.0, 100.0),
         ]
-        nodos = {"A", "B", "C", "D"}
-        uf = UnionFind(nodos)
-        
-        aristas_ordenadas = sorted(aristas, key=lambda x: x[2])
-        mst_edges = []
-        costo_total = 0.0
-        
-        for u, v, costo, cap in aristas_ordenadas:
-            if uf.union(u, v):
-                mst_edges.append((u, v))
-                costo_total += costo
-                
+        with tempfile.TemporaryDirectory() as temporal:
+            ruta = Path(temporal) / "aristas.csv"
+            pd.DataFrame(aristas, columns=["origen", "destino", "costo_unidades", "capacidad_m3_dia"]).to_csv(ruta, index=False)
+            mst, costo_total = calcular_red_menor_costo(ruta)
+        mst_edges = {frozenset((u, v)) for u, v in mst.edges()}
         # Deben seleccionarse 3 aristas (N - 1)
         self.assertEqual(len(mst_edges), 3)
         # Costo mínimo esperado: 1 + 2 + 3 = 6
         self.assertEqual(costo_total, 6.0)
-        self.assertIn(("A", "B"), mst_edges)
-        self.assertIn(("B", "C"), mst_edges)
-        self.assertIn(("C", "D"), mst_edges)
+        self.assertIn(frozenset(("A", "B")), mst_edges)
+        self.assertIn(frozenset(("B", "C")), mst_edges)
+        self.assertIn(frozenset(("C", "D")), mst_edges)
+        self.assertTrue(nx.is_tree(mst))
+
+    def test_no_presenta_bosque_o_nodos_aislados_como_red_completa(self):
+        casos = [
+            ([("PLANTA", "A", 1, 70), ("B", "C", 2, 35)], None),
+            ([("PLANTA", "A", 1, 70)], ["PLANTA", "A", "B"]),
+            ([], None),
+        ]
+        with tempfile.TemporaryDirectory() as temporal:
+            ruta = Path(temporal) / "aristas.csv"
+            for aristas, nodos in casos:
+                with self.subTest(aristas=aristas, nodos=nodos):
+                    pd.DataFrame(aristas, columns=["origen", "destino", "costo_unidades", "capacidad_m3_dia"]).to_csv(ruta, index=False)
+                    with self.assertRaises(ValueError):
+                        if nodos is None:
+                            calcular_red_menor_costo(ruta)
+                        else:
+                            calcular_red_menor_costo(ruta, nodos_esperados=nodos)
 
     def test_kruskal_red_real_coincide_con_networkx(self) -> None:
         """Verifica invariantes del MST en el grafo de la cooperativa."""

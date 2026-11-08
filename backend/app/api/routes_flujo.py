@@ -1,7 +1,6 @@
-import json
-import os
 from fastapi import APIRouter, HTTPException
 from backend.app.config import RUTA_METRICAS
+from backend.app.ml.metricas import leer_metricas
 from backend.app.schemas import (
     EscenarioRequest, SimulacionResponse, NodoRed,
     TendidoMST, EstadoFlujo, ResumenCapacidad, MetricasML
@@ -10,22 +9,19 @@ from backend.app.servicios.pipeline import ejecutar_simulacion
 
 router = APIRouter()
 
-def cargar_metricas() -> MetricasML:
-    if os.path.exists(RUTA_METRICAS):
-        try:
-            with open(RUTA_METRICAS, "r", encoding="utf-8") as f:
-                datos = json.load(f)
-                return MetricasML(mae=datos["mae"], rmse=datos["rmse"], r2=datos["r2"])
-        except Exception:
-            pass
-    return MetricasML(mae=131.28, rmse=172.97, r2=0.9939)
+def cargar_metricas() -> MetricasML | None:
+    datos = leer_metricas(RUTA_METRICAS)
+    return MetricasML(**datos) if datos is not None else None
 
 @router.post("/simular-red", response_model=SimulacionResponse)
 def simular_red(request: EscenarioRequest):
     if request.escenario_crecimiento <= 0:
         raise HTTPException(status_code=400, detail="El escenario de crecimiento debe ser mayor a 0")
         
-    resultado = ejecutar_simulacion(request.escenario_crecimiento)
+    try:
+        resultado = ejecutar_simulacion(request.escenario_crecimiento)
+    except ValueError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
     
     nodos_res = [
         NodoRed(

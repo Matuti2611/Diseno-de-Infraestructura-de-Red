@@ -18,7 +18,8 @@ def ejecutar_simulacion(escenario_crecimiento: float):
         demandas_diarias[fila['nodo_id']] = float(predicciones[idx] / DIAS_MES)
         
     # 2. Cálculo de red de tendidos de menor costo (Kruskal)
-    mst, costo_total = calcular_red_menor_costo(RUTA_ARISTAS)
+    nodos_esperados = set(df_zonas_base['nodo_id']) | set(df_planta_base['nodo_id'])
+    mst, costo_total = calcular_red_menor_costo(RUTA_ARISTAS, nodos_esperados=nodos_esperados)
     
     # 3. Flujo máximo (Edmonds-Karp) hacia el super-sumidero
     abastecido, dict_flujos = evaluar_flujo(mst, demandas_diarias)

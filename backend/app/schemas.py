@@ -45,4 +45,4 @@ class SimulacionResponse(BaseModel):
     tendidos_candidatos: Optional[List[TendidoMST]] = None
     flujos: List[EstadoFlujo]
     resumen_capacidad: Optional[ResumenCapacidad] = None
-    metricas_ml: MetricasML
+    metricas_ml: Optional[MetricasML] = None

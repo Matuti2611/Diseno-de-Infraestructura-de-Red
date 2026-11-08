@@ -3,20 +3,21 @@
 from __future__ import annotations
 
 import os
-import json
+from typing import Literal
 import joblib
 import pandas as pd
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from backend.app.config import RUTA_MODELO, RUTA_METRICAS, DIAS_MES
 from backend.app.ml.features import preparar_features_inferencia
+from backend.app.ml.metricas import leer_metricas
 
 router = APIRouter(prefix="/modelo", tags=["Machine Learning"])
 
 
 class PrediccionNodoRequest(BaseModel):
     poblacion: float = Field(..., gt=0, description="Población proyectada")
-    tipo_zona: str = Field(..., description="Tipo de zona: residencial, comercial o industrial")
+    tipo_zona: Literal["residencial", "comercial", "industrial"] = Field(..., description="Tipo de zona: residencial, comercial o industrial")
     consumo_historico_mensual: float = Field(..., gt=0, description="Consumo mensual base en m³")
     crecimiento_poblacional_estimado: float = Field(default=0.02, description="Tasa anual estimada (ej. 0.02 para 2%)")
     latitud: float = Field(default=-32.95, description="Coordenada de latitud")
@@ -47,13 +48,7 @@ def status_modelo():
 @router.get("/metricas")
 def obtener_metricas():
     """Devuelve las métricas de evaluación del modelo sobre el conjunto de test."""
-    if os.path.exists(RUTA_METRICAS):
-        try:
-            with open(RUTA_METRICAS, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error al leer métricas: {str(e)}")
-    return {"mae": 131.28, "rmse": 172.97, "r2": 0.9939}
+    return leer_metricas(RUTA_METRICAS)
 
 
 @router.post("/predecir")
