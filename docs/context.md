@@ -58,12 +58,13 @@ Guía: `../frontend/README.md`. Decisiones: `plan-frontend.md`. Capturas reales:
 - `generar_grafo.py`: cuadrícula 4 × 4 más dos enlaces desde planta.
 - Consumo m³/mes, capacidad m³/día, horizonte cinco años, costos convencionales. El pipeline divide por 30 para convertir a diario.
 - La evaluación mide aprendizaje de reglas sintéticas, no precisión sobre una cooperativa real.
-- `cargar.py` sigue vacío. Rutas de `config.py` relativas: ejecutar backend desde raíz.
-- Coordinar cambios CSV con Matías, sincronizar geometría de frontend y revisar diferencias antes de publicar.
+- `cargar.py`: capa I/O con funciones tipadas para lectura de zonas, planta, aristas, historial y nodos unificados con rutas centralizadas en `config.py`.
 
 ## Machine learning
 
 Matías implementó `entrenar.py`: lectura, exclusión ID/objetivo, dummies, partición 80/20 semilla 42 y comparación de regresión lineal/árbol. Exporta regresión lineal a `backend/models/modelo_consumo.joblib`; `predictor.py` la carga. Las métricas de evaluación del conjunto de prueba se persisten en `backend/models/metricas.json` y son leídas dinámicamente por la API.
+- `features.py`: funciones `preparar_features_entrenamiento` y `preparar_features_inferencia` (asegura coincidencia de columnas y dummies con el modelo) y cálculo de consumo per cápita.
+- `evaluar.py`: cálculo de métricas de regresión (MAE, RMSE, MSE, R²) y reporte formateado por consola.
 
 Métricas reproducidas y persistidas: MAE=131.28 m³/mes, RMSE=172.97 m³/mes y R²=0.9939 (frente a Árbol de Decisión: MAE=197.95, RMSE=308.79, R²=0.9807).
 
@@ -76,28 +77,48 @@ Implementación manual propia conforme a la consigna:
 - `mst.py`: Algoritmo de Kruskal manual ordenando aristas por costo y previniendo ciclos con `UnionFind`. Valida coincidencia de costo exacto frente a `networkx.minimum_spanning_tree`.
 - `flujo.py`: Algoritmo de Edmonds–Karp manual con búsqueda en anchura (`bfs_manual`) para caminos de aumento residuales. Conecta cada barrio al `SUPER_SUMIDERO` con capacidad igual a su demanda diaria proyectada. Valida coincidencia exacta de caudal máximo abastecido frente a `networkx.maximum_flow`.
 - `diagnostico.py`: `obtener_estados_flujo` reporta la magnitud neta de caudal para los 16 tendidos del MST, porcentaje de utilización y saturación al 100 %. `obtener_aristas_saturadas` preserva el filtrado >=90 %.
+- `construir.py`: preparación de aristas ordenadas para Kruskal, listas de adyacencia no dirigida y construcción de red residual dirigida para flujo máximo.
 
 ## API y contrato
 
-`POST /api/simular-red` recibe `escenario_crecimiento` (validado positivo y finito: `0.0 < escenario <= 5.0`). Cumple con la especificación completa acordada en `contrato-api.md`:
-1. `nodos`: Contiene 17 nodos (la `PLANTA` con sus coordenadas de `planta.csv`, `tipo_zona="PLANTA"` y demanda 0.0, más los 16 barrios).
-2. `tendidos_mst`: Los 16 enlaces elegidos por Kruskal con origen, destino, costo y capacidad máxima.
-3. `tendidos_candidatos`: Las 26 alternativas de tendidos disponibles en la red con costo y capacidad.
-4. `flujos`: 16 registros (la totalidad del MST) con magnitud no negativa, capacidad y booleano `saturada`.
-5. `resumen_capacidad`: Objeto con `demanda_total_m3_dia`, `caudal_abastecido_m3_dia` y `deficit_m3_dia`. Cumple la invariante matemática `demanda_total == caudal_abastecido + deficit`.
-6. `metricas_ml`: Cargadas dinámicamente desde `backend/models/metricas.json`.
-7. CORS configurado con `allow_credentials=False` para compatibilidad estricta con orígenes comodín (`*`) y navegadores modernos.
+FastAPI con rutas modularizadas:
+- `POST /api/simular-red` (en `routes_flujo.py`): recibe `escenario_crecimiento` (validado positivo y finito: `0.0 < escenario <= 5.0`). Cumple con la especificación completa acordada en `contrato-api.md`:
+  1. `nodos`: Contiene 17 nodos (la `PLANTA` con sus coordenadas de `planta.csv`, `tipo_zona="PLANTA"` y demanda 0.0, más los 16 barrios).
+  2. `tendidos_mst`: Los 16 enlaces elegidos por Kruskal con origen, destino, costo y capacidad máxima.
+  3. `tendidos_candidatos`: Las 26 alternativas de tendidos disponibles en la red con costo y capacidad.
+  4. `flujos`: 16 registros (la totalidad del MST) con magnitud no negativa, capacidad y booleano `saturada`.
+  5. `resumen_capacidad`: Objeto con `demanda_total_m3_dia`, `caudal_abastecido_m3_dia` y `deficit_m3_dia`. Cumple la invariante matemática `demanda_total == caudal_abastecido + deficit`.
+  6. `metricas_ml`: Cargadas dinámicamente desde `backend/models/metricas.json`.
+- `routes_red.py`: `GET /api/red/nodos`, `GET /api/red/conexiones` y `GET /api/red/mst` para inspección directa de la red.
+- `routes_modelo.py`: `GET /api/modelo/status`, `GET /api/modelo/metricas` y `POST /api/modelo/predecir` para inferencia puntual por zona en m³/mes y m³/día.
+- CORS configurado con `allow_credentials=False` para compatibilidad estricta con orígenes comodín (`*`) y navegadores modernos.
 
 ## Pruebas y verificación
 
 **Backend, 08/11/2026:**
 
-- `python -m unittest discover -s backend/tests -v`: **10 pruebas aprobadas** (0.081 s).
+- `python -m unittest discover -s backend/tests -v`: **15 pruebas aprobadas** (0.12 s).
   - `test_datos.py`: 1 test de repetibilidad y conectividad inicial del dataset sintético.
   - `test_mst.py`: 3 tests:
     1. Operaciones básicas de `UnionFind` y detección de ciclos.
     2. Caso pequeño controlado (4 nodos con descarte de aristas redundantes).
     3. Invariantes de Kruskal en el grafo real: 17 nodos conexos, 16 aristas (árbol acíclico), pesos positivos y coincidencia exacta con NetworkX (costo 73066.05).
+  - `test_flujo.py`: 2 tests:
+    1. Caso controlado resuelto a mano PLANTA–A–B de `contrato-api.md`:
+       - Caso cubierto (demandas 20 y 30, capacidades 70 y 35): flujo total 50, déficit 0.
+       - Caso insuficiente (demandas 26 y 39, capacidades 70 y 35): cuello de botella en A–B satura en 35, suministro 61, déficit 4.
+    2. Invariantes en red completa: respeto de capacidades máximas y conservación de caudal en cada barrio intermedio frente al super-sumidero. Coincidencia con NetworkX.
+  - `test_pipeline.py`: 4 tests:
+    1. Simulación base completa: 17 nodos, 16 tendidos, 16 flujos, 26 candidatos, balance consistente.
+    2. Crecimiento monótono de demanda al aumentar escenario (1.0 -> 1.1 -> 1.3).
+    3. Validación del endpoint API con respuesta estructurada según esquema.
+    4. Rechazo de escenarios inválidos (menores o iguales a cero).
+  - `test_modulos_auxiliares.py`: 5 tests:
+    1. Carga de datos base (zonas, planta, aristas, conexiones).
+    2. Preparación y alineación de features para inferencia y consumo per cápita.
+    3. Cálculo de métricas de evaluación de regresión (MAE, RMSE, R²).
+    4. Preparación de aristas para Kruskal y listas de adyacencia.
+    5. Endpoints auxiliares de red (`/nodos`, `/conexiones`, `/mst`) y de modelo (`/status`, `/metricas`, `/predecir`).
   - `test_flujo.py`: 2 tests:
     1. Caso controlado resuelto a mano PLANTA–A–B de `contrato-api.md`:
        - Caso cubierto (demandas 20 y 30, capacidades 70 y 35): flujo total 50, déficit 0.
