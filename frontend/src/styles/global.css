@@ -142,8 +142,14 @@ button svg, a svg { flex-shrink: 0; }
 .tramo-interactivo:focus-visible .tramo, .tramo-interactivo:hover .tramo { stroke-width: 6; }
 .tramo-interactivo:focus-visible .tramo-hit { stroke: var(--azul); stroke-width: 12; opacity: .18; }
 .etiqueta-flujo { pointer-events: none; }
-.etiqueta-flujo rect { fill: var(--blanco); stroke: #d8c3bc; stroke-width: 1; }
-.etiqueta-flujo text { fill: #8d4330; font-size: 11px; font-weight: 700; }
+.etiqueta-flujo rect { fill: var(--blanco); stroke: var(--borde); stroke-width: 1; }
+.etiqueta-flujo text { fill: var(--texto); font-size: 14px; font-weight: 650; }
+.etiqueta-flujo .etiqueta-utilizacion { fill: var(--texto-suave); font-size: 11px; font-weight: 400; }
+.etiqueta-cercano rect { stroke: #d6b38c; }
+.etiqueta-cercano .etiqueta-caudal { fill: var(--advertencia); }
+.etiqueta-saturado rect, .etiqueta-sin-capacidad rect { stroke: #d8aaa4; }
+.etiqueta-saturado .etiqueta-caudal, .etiqueta-sin-capacidad .etiqueta-caudal { fill: var(--error); }
+.etiqueta-sin-dato .etiqueta-caudal { fill: var(--texto-suave); }
 .nodo { cursor: pointer; }
 .nodo-forma { fill: var(--blanco); stroke: var(--azul); stroke-width: 2; }
 .nodo-centro { fill: var(--azul); }
@@ -180,10 +186,22 @@ button svg, a svg { flex-shrink: 0; }
 .muestra-nodo { width: 9px; height: 9px; border: 1.5px solid var(--azul); border-radius: 50%; }
 .muestra-planta { width: 10px; height: 10px; border-radius: 3px; background: var(--azul); }
 .nota-geometria { color: var(--texto-suave); font-size: 11px; border-top: 1px solid var(--borde); padding: 14px 20px; line-height: 1.6; }
-.aviso-capacidad { display: flex; align-items: flex-start; gap: 12px; border: 1px solid #d4e0e9; border-radius: 10px; background: #ebf1f6; padding: 15px 19px; margin-bottom: 15px; }
-.aviso-capacidad > .icono { width: 17px; height: 17px; margin-top: 1px; color: var(--azul); }
-.aviso-capacidad strong { font-size: 12px; font-weight: 650; }
-.aviso-capacidad p { color: var(--texto-suave); font-size: 11px; line-height: 1.8; margin-top: 4px; }
+.diagnostico-capacidad { border: 1px solid #d4e0e9; border-radius: 12px; background: var(--blanco); padding: 21px; margin-bottom: 18px; }
+.diagnostico-titulo { display: flex; align-items: flex-start; gap: 12px; }
+.diagnostico-titulo > .icono { color: var(--azul); margin-top: 3px; }
+.diagnostico-titulo .etiqueta-superior { font-size: 9px; letter-spacing: 1.3px; }
+.diagnostico-titulo h2 { font-size: 16px; line-height: 1.5; margin-top: 6px; }
+.diagnostico-capacidad p { color: var(--texto-suave); font-size: 11px; line-height: 1.8; margin-top: 7px; }
+.diagnostico-deficit { border-color: #dcbab4; }
+.diagnostico-deficit .diagnostico-titulo > .icono { color: var(--error); }
+.balance-agua { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 20px 0 0; }
+.balance-agua > div { border-left: 2px solid var(--azul-claro); padding-left: 13px; }
+.balance-agua dt { font-size: 11px; color: var(--texto-suave); }
+.balance-agua dd { margin: 8px 0 0; font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.balance-agua small { font-size: 11px; color: var(--texto-suave); font-weight: 400; }
+.diagnostico-deficit .balance-agua > div:last-child { border-color: var(--error); }
+.diagnostico-deficit .balance-agua > div:last-child dd { color: var(--error); }
+.diagnostico-capacidad .diagnostico-cobertura { border-top: 1px solid var(--borde); padding-top: 13px; margin-top: 16px; }
 
 .panel-tabla { margin-top: 22px; }
 .contador { display: inline-flex; align-items: center; justify-content: center; padding: 3px 6px; min-width: 23px; background: #edf2f6; border-radius: 5px; color: var(--texto-suave); font-size: 10px; margin-left: 5px; font-weight: 500; }
@@ -307,7 +325,6 @@ tbody tr.fila-elegida { background: #edf2f6; }
   .mapa-contenedor { min-height: 0; display: block; max-width: 100%; overflow-x: auto; padding: 40px 0 7px; }
   .mapa-svg { min-width: 760px; }
   .nodo-etiqueta { font-size: 15px; }
-  .etiqueta-flujo text { font-size: 13px; }
   .mapa-ayuda { display: block; font-size: 11px; line-height: 1.6; color: var(--texto-suave); padding: 0 15px 15px; }
   .control-checkbox { min-height: 32px; }
   .boton-tramo { min-height: 30px; }
@@ -326,7 +343,9 @@ tbody tr.fila-elegida { background: #edf2f6; }
   thead th, tbody th, tbody td { padding: 13px 15px; }
   .tabla-pie { padding: 12px 15px; align-items: flex-start; }
   .tabla-pie > span:last-child { max-width: 60%; text-align: right; line-height: 1.6; }
-  .aviso-capacidad { padding: 14px; }
+  .diagnostico-capacidad { padding: 16px; }
+  .balance-agua { grid-template-columns: 1fr; gap: 14px; }
+  .balance-agua dd { font-size: 22px; margin-top: 5px; }
   .metodologia-cuerpo { grid-template-columns: 1fr; gap: 16px; padding: 0 18px 18px; }
   .metodologia summary { padding: 16px; }
   .metodologia summary > span:first-child { font-size: 11px; }

@@ -1,12 +1,12 @@
 # Propuesta de página y arquitectura inicial
 
-Fecha inicial: 2026-11-07. Actualización: 2026-11-08. Estado: **primera implementación local terminada e integrada con Render**. Pasaron 22 pruebas, lint, TypeScript y build. La publicación en Vercel y completar suministro/déficit en la API siguen pendientes. Este documento conserva la arquitectura y el alcance objetivo; el estado comprobado está en `context.md`.
+Fecha inicial: 2026-11-07. Actualización: 2026-11-08. Estado: **página integrada con Render, etiquetas de caudal y panel de abastecimiento preparado para extensión de API**. Pasaron 33 pruebas, lint, TypeScript y build. La publicación en Vercel y completar suministro/déficit en la API siguen pendientes. Este documento conserva la arquitectura y el alcance objetivo; el estado comprobado está en `context.md`.
 
 ### Implementación actual frente al plan
 
 Se implementaron las dos vistas, selección SVG/tabla, escenarios, búsqueda, estados de carga/error/reintento y paleta. Se usa API real desde el inicio: el modo demostración propuesto no fue necesario; los fixtures solo se usan en tests. La API solo devuelve flujos críticos: los demás se presentan como **Sin dato**, sin inventar déficit o suministro. Los escenarios multiplican la tasa de crecimiento poblacional, como el predictor actual.
 
-La revisión del PDF identificó un pendiente adicional de interfaz: el gráfico etiqueta porcentajes solo en críticos; falta representar el caudal de cada arista cuando la API entregue todos los flujos, e incorporar cobertura/suministro/déficit. Ver `revision-consigna.md`. La sección de IA y diseño del informe ya registra el generador de paletas, uso exploratorio de Figma y patrones del proyecto previo de Ciro que tienen correspondencia con el alcance actual.
+Se cerró el pendiente de etiquetas: cada arista del MST muestra caudal/utilización o Sin dato. El panel de abastecimiento ya presenta cobertura/suministro/déficit cuando recibe un `resumen_capacidad` válido; el contrato propuesto está en `contrato-api.md` y no cambió el backend. Sigue pendiente probar los campos reales de extremo a extremo. Ver `revision-consigna.md`. La sección de IA y diseño registra paleta, exploración de Figma y patrones del proyecto previo de Ciro presentes en este alcance.
 
 Temporalmente se complementan planta y candidatos con geometría/costos/capacidades de los CSV versionados (`casoRed.json`), tras comprobar coincidencia con los barrios y MST recibidos. No se generan predicciones ni algoritmos en navegador. Ante otra red se descarta ese complemento. El cliente prioriza candidatos enviados por API cuando estén disponibles. Sincronización y ejecución: `../frontend/README.md`.
 

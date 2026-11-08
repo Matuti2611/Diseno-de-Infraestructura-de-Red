@@ -72,6 +72,20 @@ export function validarSimulacion(valor: unknown): SimulacionResponse {
     if (!a || Math.abs(a.capacidad_maxima - f.capacidad_maxima) > 1e-6) throw new Error('El flujo no coincide con los tendidos recibidos.');
   }
   const respuesta: SimulacionResponse = { nodos, tendidos_mst: mst, flujos, metricas_ml: null };
+  if (v.resumen_capacidad != null) {
+    const r = objeto(v.resumen_capacidad);
+    const demanda = numero(r.demanda_total_m3_dia);
+    const abastecido = numero(r.caudal_abastecido_m3_dia);
+    const deficit = numero(r.deficit_m3_dia);
+    const sumaDemandas = nodos.filter(n => n.id !== 'PLANTA').reduce((s, n) => s + n.demanda_diaria_proyectada, 0);
+    // Tolera el redondeo acumulado de demandas por barrio, sin aceptar balances distintos.
+    const tolerancia = Math.max(0.1, sumaDemandas * 1e-6);
+    if (Math.abs(demanda - sumaDemandas) > tolerancia || abastecido > demanda + tolerancia
+      || Math.abs(demanda - abastecido - deficit) > tolerancia) {
+      throw new Error('El resumen de capacidad no coincide con las demandas o el balance de agua.');
+    }
+    respuesta.resumen_capacidad = { demanda_total_m3_dia: demanda, caudal_abastecido_m3_dia: abastecido, deficit_m3_dia: deficit };
+  }
   if (v.metricas_ml != null) {
     const m = objeto(v.metricas_ml);
     const r2 = numero(m.r2, -Infinity);
@@ -85,7 +99,11 @@ export function validarSimulacion(valor: unknown): SimulacionResponse {
       if (!ids.has(a.origen) || !ids.has(a.destino)) throw new Error('Un tendido candidato referencia un nodo inexistente.');
     }
     for (const a of mst) {
-      if (!candidatos.some(c => idArista(c.origen, c.destino) === idArista(a.origen, a.destino))) throw new Error('Falta un tendido seleccionado entre los candidatos.');
+      const candidato = candidatos.find(c => idArista(c.origen, c.destino) === idArista(a.origen, a.destino));
+      if (!candidato || Math.abs(candidato.costo - a.costo) > 1e-6
+        || Math.abs(candidato.capacidad_maxima - a.capacidad_maxima) > 1e-6) {
+        throw new Error('El tendido seleccionado no coincide con los candidatos.');
+      }
     }
     respuesta.tendidos_candidatos = candidatos;
   }

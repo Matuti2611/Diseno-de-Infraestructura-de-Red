@@ -1,10 +1,9 @@
 import { PanelRed, type PropsPanelRed } from '../components/PanelRed';
-import { Icono } from '../components/Icono';
+import { DiagnosticoCapacidad } from '../components/DiagnosticoCapacidad';
 
 export function VistaFlujo(props: PropsPanelRed) {
-  const seleccionadas = props.red.aristas.filter(a => a.seleccionada).length;
   return <>
-    <div className="aviso-capacidad"><Icono nombre="info" /><div><strong>Lectura de capacidad</strong><p>Hay caudal informado para {props.red.flujosInformados} de {seleccionadas} tendidos. Los demás figuran como «Sin dato». El abastecimiento total y el déficit todavía no están informados por el servicio.</p></div></div>
+    <DiagnosticoCapacidad red={props.red} />
     <PanelRed {...props} vista="capacidad" />
   </>;
 }

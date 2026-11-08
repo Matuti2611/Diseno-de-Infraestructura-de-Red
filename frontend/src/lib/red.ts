@@ -54,5 +54,6 @@ export function construirRed(respuesta: SimulacionResponse): RedVisual {
     tramosCriticos: aristas.filter(a => a.seleccionada && ['cercano', 'saturado', 'sin-capacidad'].includes(a.estado)).length,
     flujosInformados: respuesta.flujos.length,
     ubicacionesFaltantes: [...new Set(respuesta.tendidos_mst.flatMap(a => [a.origen, a.destino]))].filter(id => !nodos.some(n => n.id === id)),
+    resumenCapacidad: respuesta.resumen_capacidad ?? null,
   };
 }

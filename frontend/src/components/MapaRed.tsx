@@ -11,7 +11,7 @@ export function MapaRed({ red, vista, mostrarCandidatos, seleccion, onSelecciona
   const minLat = Math.min(...latitudes), maxLat = Math.max(...latitudes);
   const minLon = Math.min(...longitudes), maxLon = Math.max(...longitudes);
   const puntos = new Map(red.nodos.map(n => [n.id, {
-    x: 95 + (n.longitud - minLon) / (maxLon - minLon || 1) * 755,
+    x: (vista === 'capacidad' ? 80 : 95) + (n.longitud - minLon) / (maxLon - minLon || 1) * (vista === 'capacidad' ? 690 : 755),
     y: 65 + (maxLat - n.latitud) / (maxLat - minLat || 1) * 355,
   }]));
   const activar = (event: KeyboardEvent<SVGGElement>, siguiente: Seleccion) => {
@@ -28,12 +28,21 @@ export function MapaRed({ red, vista, mostrarCandidatos, seleccion, onSelecciona
       const elegida = seleccion?.tipo === 'arista' && seleccion.id === a.id;
       const estado = vista === 'capacidad' ? a.estado : a.seleccionada ? 'informado' : 'candidato';
       const siguiente: Seleccion = { tipo: 'arista', id: a.id };
-      const critica = vista === 'capacidad' && ['cercano', 'saturado', 'sin-capacidad'].includes(a.estado);
-      return <g key={a.id} className="tramo-interactivo" role="button" tabIndex={0} aria-label={`Inspeccionar conexión ${a.origen} a ${a.destino}`} aria-pressed={elegida} onClick={() => onSeleccionar(siguiente)} onKeyDown={e => activar(e, siguiente)}>
+      const mostrarCaudal = vista === 'capacidad' && a.seleccionada;
+      const textoCaudal = a.flujo === null ? 'Sin dato' : `${numero(a.flujo)} m³/día`;
+      const textoCapacidad = a.utilizacion === null ? `Cap. ${numero(a.capacidad_maxima)} m³/día` : `${numero(a.utilizacion)} % de capacidad`;
+      const descripcion = `Inspeccionar conexión ${a.origen} a ${a.destino}${mostrarCaudal ? `. Caudal: ${textoCaudal}. ${textoCapacidad}` : ''}`;
+      // En enlaces verticales, desplaza la etiqueta al costado para no tapar el nombre del nodo.
+      const etiquetaX = (origen.x + destino.x) / 2 + (Math.abs(origen.x - destino.x) < 30 ? 104 : 0);
+      return <g key={a.id} className="tramo-interactivo" role="button" tabIndex={0} aria-label={descripcion} aria-pressed={elegida} onClick={() => onSeleccionar(siguiente)} onKeyDown={e => activar(e, siguiente)}>
         {elegida && <line x1={origen.x} y1={origen.y} x2={destino.x} y2={destino.y} className="tramo-halo" />}
         <line x1={origen.x} y1={origen.y} x2={destino.x} y2={destino.y} className={`tramo tramo-${estado}`} />
         <line x1={origen.x} y1={origen.y} x2={destino.x} y2={destino.y} className="tramo-hit" />
-        {critica && <g className="etiqueta-flujo" transform={`translate(${(origen.x + destino.x) / 2},${(origen.y + destino.y) / 2})`}><rect x="-25" y="-12" width="50" height="24" rx="7" /><text textAnchor="middle" dominantBaseline="central">{a.utilizacion !== null ? `${numero(a.utilizacion, 0)} %` : '0 m³'}</text></g>}
+        {mostrarCaudal && <g className={`etiqueta-flujo etiqueta-${a.estado}`} aria-hidden="true" transform={`translate(${etiquetaX},${(origen.y + destino.y) / 2})`}>
+          <rect x="-72" y="-21" width="144" height="42" rx="7" />
+          <text className="etiqueta-caudal" textAnchor="middle" y="-3">{textoCaudal}</text>
+          <text className="etiqueta-utilizacion" textAnchor="middle" y="13">{textoCapacidad}</text>
+        </g>}
       </g>;
     })}
     {red.nodos.map(n => {

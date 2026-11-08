@@ -8,7 +8,7 @@
 
 Trabajo integrador de ML, grafos y desarrollo web para una cooperativa de agua. Proyectar el consumo a cinco años, calcular tendidos de menor costo y comprobar si permiten abastecer la demanda. La consigna indica entrega el 08/11/2026. No se trata de una red de módems.
 
-El 08/11 se releyó el PDF completo: consignas generales pp. 1–4 y TP elegido pp. 7–8. Matriz de cumplimiento en `revision-consigna.md`. El proyecto no se declara completo: además del backend hay pendientes de visualización de todos los caudales, diagnóstico, documentación y entrega. El enunciado exige demo e instrucciones reproducibles; no obliga a publicar en Vercel ni contratar hosting.
+El 08/11 se releyó el PDF completo: consignas generales pp. 1–4 y TP elegido pp. 7–8. Matriz de cumplimiento en `revision-consigna.md`. La página ya puede mostrar todos los caudales y un diagnóstico de cobertura mediante una extensión opcional preparada en frontend; faltan los campos reales del backend, validación conjunta y entrega. El enunciado exige demo e instrucciones reproducibles; no obliga a publicar en Vercel ni contratar hosting.
 
 Recorrido: datos → regresión → demanda por nodo → Kruskal o Prim → Ford–Fulkerson o Edmonds–Karp → API → frontend.
 
@@ -20,7 +20,7 @@ Recorrido: datos → regresión → demanda por nodo → Kruskal o Prim → Ford
 - El usuario pide tests que detecten errores relevantes, no pruebas agregadas únicamente para que pasen.
 - Se aprobó React + TypeScript estricto + Vite, CSS propio y SVG, con vistas Tendidos y Capacidad, escenarios y tabla. El 08/11 autorizó continuar la página; esta etapa ya está implementada localmente. No volver a pedir aprobación por el mismo alcance.
 - Hosting elegido: Vercel para frontend y Render para FastAPI. Efectos decorativos pospuestos. Sin autenticación, base de datos ni servicios nuevos.
-- El usuario autorizó agrupar los cambios existentes en commits y continuar con los pendientes del frontend. Se creó y comprobó el commit de implementación de la página, configuración y 22 pruebas; este grupo documental incorpora informe, revisión de consigna y guías actualizadas. El usuario realiza los push; no se autorizó publicar servicios.
+- El usuario autorizó agrupar los cambios existentes en commits y continuar con los pendientes del frontend. Se crearon y comprobaron los commits de implementación inicial y documentación. El siguiente grupo completa etiquetas de caudal, panel de balance opcional y pruebas de capacidad. El usuario realiza los push; no se autorizó publicar servicios.
 
 ## Estado del repositorio
 
@@ -28,7 +28,7 @@ La integración autorizada con Matías quedó en `49707da`, conservando ambos hi
 
 Esta etapa implementa `frontend/` y actualiza documentación y `.gitignore`; no modifica código, datos ni modelo del backend. No se publicó el frontend.
 
-La implementación inicial y sus capturas quedaron registradas en `4b2114e`, comprobado con el log. El siguiente grupo reúne el informe y documentación. No se hizo fetch ni push en esta sesión; la sincronización con el remoto sigue sin comprobarse.
+La implementación inicial quedó en `4b2114e` y el informe/documentación en `77a492a`, comprobados con el log; el árbol quedó limpio entre esa agrupación y el trabajo nuevo. Esta etapa continúa con el cierre del frontend y su contrato de capacidad. No se hizo fetch ni push en esta sesión; la sincronización con el remoto sigue sin comprobarse.
 
 ## Página / frontend
 
@@ -39,6 +39,8 @@ La implementación inicial y sus capturas quedaron registradas en `4b2114e`, com
 - Cliente aislado en `src/api/`, validación JSON y de relaciones nodos/aristas/flujos, cancelación y timeout de 90 segundos. Error, reintento, red vacía y resultado previo identificado por escenario. Respuestas viejas no sobrescriben escenarios nuevos.
 - Nunca se sustituyen errores por ejemplos. Los fixtures JSON están solo en tests. Las métricas se muestran como reportadas por API, sin declararlas reproducidas.
 - Flujos ausentes: **Sin dato**, no cero. Cercanía desde 90 % y saturación al 100 % se distinguen por flujo/capacidad, pese al booleano actual del backend. No se inventan suministro ni déficit.
+- Cada tendido del MST tiene etiqueta de caudal/utilización en el gráfico; los no informados quedan explícitos. En tramos verticales las etiquetas se ubican al costado para no tapar nombres de nodos. Se preserva selección por teclado con lectura del caudal.
+- Panel de abastecimiento preparado para `resumen_capacidad` con demanda/suministro/déficit y estado de cobertura. Es una extensión opcional propuesta, no implementada en Python ni disponible en Render. Sin resumen muestra **Diagnóstico incompleto**; no deduce cobertura aun con todos los caudales. Se valida consistencia con nodos/balance y costos/capacidades de candidatos frente al MST.
 - La API omite planta y candidatos. `src/data/casoRed.json` aporta geometría, costos y capacidades de CSV versionados, solo si coinciden barrios y MST con el caso recibido. Si no coinciden, se usa la respuesta sin candidatos locales y se avisa si faltan coordenadas. Se prioriza `tendidos_candidatos` de la API si lo incorpora.
 - Sincronización manual: `python frontend/scripts/sincronizar_datos.py` desde raíz. La copia no contiene predicciones ni ejecuta algoritmos. Vercel compila el JSON versionado sin Python.
 - En móvil gráfico y tabla tienen desplazamiento interno para mantener etiquetas legibles. Selección por teclado y estados con texto.
@@ -46,9 +48,9 @@ La implementación inicial y sus capturas quedaron registradas en `4b2114e`, com
 
 Guía: `../frontend/README.md`. Decisiones: `plan-frontend.md`. Capturas reales: `capturas/`.
 
-**Próximo paso:** revisión visual del usuario, luego Vercel: raíz `frontend`, build `npm run build`, salida `dist`, Node 24.x y `VITE_API_URL=https://infraestructura-red-api.onrender.com`. Aún no se creó ni publicó ese servicio.
+**Próximo paso:** coordinar `contrato-api.md` con Matías y probar sus campos reales en la página. La presentación y los tests del balance ya están preparados. Después, comprobar demo completa/publicación prevista en Vercel: raíz `frontend`, build `npm run build`, salida `dist`, Node 24.x y `VITE_API_URL=https://infraestructura-red-api.onrender.com`. Aún no se creó ni publicó ese servicio.
 
-**Pendiente confirmado al releer la consigna:** `MapaRed.tsx` etiqueta solo porcentajes en tramos críticos; no muestra el caudal de cada arista en el gráfico. Al recibir todos los flujos hay que completar esa representación, además de suministro/déficit y estado de cobertura. No basta con que Matías amplíe el JSON para declarar terminada la página.
+**Cierre pendiente:** recibir todos los flujos y el resumen real, contrastar el contrato publicado y repetir escenarios cubiertos/con déficit de extremo a extremo. Esa validación no se reemplaza con los mocks; la representación del caudal y del resumen ya está implementada del lado frontend.
 
 ## Datos
 
@@ -90,21 +92,26 @@ Verificación real: 16 barrios, 16 tendidos, dos flujos y demanda base sumada 21
 5. Persistir métricas verificables y fijar dependencias compatibles con modelo.
 6. Ajustar CORS al origen definitivo de Vercel. Hoy permite cualquier origen con credenciales; preflight local respondió correctamente.
 
+Propuesta concreta en `contrato-api.md`: `resumen_capacidad` opcional con `demanda_total_m3_dia`, `caudal_abastecido_m3_dia`, `deficit_m3_dia`. Se mantiene compatibilidad con respuestas que lo omiten. Validación de totales con tolerancia `max(0.1 m³/día, sumaDemandas × 1e-6)`. Esto no modifica el contrato Python actual: Matías debe coordinar e implementar esa extensión o acordar otra estructura y adaptar el cliente.
+
 ## Pruebas y verificación
 
 **Frontend, 08/11/2026:**
 
-- `npm.cmd test`: **22 pruebas aprobadas**, tres archivos.
+- `npm.cmd test`: **33 pruebas aprobadas**, cuatro archivos.
 - `npm.cmd run lint`: aprobado.
-- `npm.cmd run build`: aprobado; incluye `tsc --noEmit` y Vite. JavaScript ~255 kB / 79 kB gzip.
-- Se repitieron las 22 pruebas, lint y build tras quitar indicadores de conexión/hora y aclarar el selector: todo aprobado. Las capturas conservan la primera versión visual, anterior a esos ajustes de texto/cabecera.
+- `npm.cmd run build`: aprobado; incluye `tsc --noEmit` y Vite. JavaScript ~257 kB / 80 kB gzip.
+- Se repitieron pruebas, lint y build tras restaurar dependencias y cerrar las etiquetas: todo aprobado. `npm.cmd ls --depth=0` también confirmó dependencias válidas. Las capturas se renovaron con caudales y sin el indicador/hora.
 - Contrato: números inválidos, duplicados, referencias inexistentes, flujo imposible, campos ausentes; diferencia dato ausente/cero/cercanía/saturación/capacidad cero. Geometría obsoleta no se mezcla con otra red.
 - Cliente: request esperado, HTTP fallido, JSON incompatible y timeout.
 - Interfaz: búsqueda/restablecer, teclado, escenario, respuestas desordenadas, error/reintento conservando resultado identificado y red vacía sin nodos de ejemplo.
-- Edge con API real: escenarios base/+30 %, vistas de tendidos/capacidad, 17 nodos y 26 candidatos. A 390 px la página no desborda y el gráfico mantiene scroll interno. Capturas en `capturas/`.
+- Capacidad: etiquetas incluso en tramos no críticos, cero frente a dato ausente, balance consistente, rechazo de resúmenes incompatibles/candidatos contradictorios y transición de cobertura a déficit con respuestas controladas. Caso resuelto a mano exclusivo de tests en `src/tests/fixtures/capacidad.ts`; no representa predicciones del modelo ni se usa en producción.
+- Edge con API real: base/+30 %, vistas tendidos/capacidad, 17 nodos, 26 candidatos y 16 etiquetas: dos caudales reales y 14 Sin dato. Se confirma diagnóstico incompleto al faltar resumen. A 390 px la página no desborda y el gráfico mantiene scroll interno de 760 px. Capturas en `capturas/`.
 - Perfiles temporales `.preview/` excluidos del watcher para evitar EBUSY de Edge; no se versionan.
 - Se exceptuó `frontend/src/lib/` del ignore genérico de Python para que los helpers de presentación se incluyan al compartir/clonar el proyecto.
 - Windows bloqueó esbuild en aislamiento: pruebas/build se ejecutaron con permiso y pasaron.
+- Instalación aislada: `npm ci --offline --no-audit --no-fund` pasó con el lockfile en una copia sin node_modules. Build/tests de esa copia se bloquearon por permisos de Windows tanto en aislamiento (esbuild) como al elevar (lectura de package.json); no se declaran aprobados allí. El ensayo en otra máquina sigue pendiente.
+- En un primer intento dentro de `.preview/`, npm resolvió el frontend principal y afectó node_modules al encontrar ejecutables en uso. Se restauraron sus dependencias con la caché/lockfile, sin cambiar versiones; el proyecto principal volvió a pasar las 33 pruebas, lint y build. No modificar ni detener procesos de desarrollo ajenos al QA propio.
 
 **Backend:** última ejecución conocida de `test_datos.py`: un test aprobado de repetibilidad, esquema, costos/capacidades positivos y conexión de barrios con planta. No prueba ML, MST, flujo ni pipeline. No se instalaron sus dependencias ni arrancó Python localmente en esta etapa; sí se comprobó el servicio desde navegador.
 
@@ -120,7 +127,7 @@ Caso útil: PLANTA–A capacidad 70, A–B capacidad 35; demandas A=20, B=30 m³
 
 La sección de IA ya incluye herramientas, tareas, ejemplos de instrucciones resumidas, responsabilidades, reflexión y corrección del indicador live. Ciro aclaró que usó paletasdecolores.com.ar y exploró diseños de temática parecida en Figma, sin afirmar prototipado completo o funciones de IA. De su proyecto anterior se documentan solo patrones presentes aquí: TypeScript, componentes/utilidades/tests, separación UI/cliente/backend, mocks y documentación de contexto/continuidad. No se inspeccionó ese proyecto ni se identificaron copias literales; no se atribuye su código a IA. Por pedido expreso de Ciro, registrar únicamente aportes que existan o estén planificados en este proyecto. El indicador live queda como único desacierto visual señalado por Ciro hasta esta revisión; su comentario sobre la IA se registra como observación del integrante. Queda completar el registro de Matías si hubo otras intervenciones.
 
-README raíz y `frontend/README.md`: arranque/pruebas. El plan conserva alternativas y señala implementación y pendientes de API.
+README raíz y `frontend/README.md`: arranque/pruebas. El plan y matriz reflejan el cierre de etiquetas y panel preparado. `contrato-api.md` contiene una propuesta precisa para Matías, estados compatibles y caso conocido, sin afirmar cambios de backend.
 
 ## Hosting y despliegue
 
@@ -140,7 +147,7 @@ Frontend compilado localmente, **sin publicación en Vercel**. `VITE_API_URL` co
 
 ## Próxima secuencia
 
-1. Matías: implementación de algoritmos y tests matemáticos, evaluación reproducible de ML y contrato completo (planta, candidatos, todos los flujos, suministro/déficit).
-2. Página: integrar campos nuevos, mostrar todos los caudales y cobertura; probar un escenario que cambie el diagnóstico, sin geometría local cuando la API la provea.
+1. Matías: implementar algoritmos y tests matemáticos, evaluación reproducible de ML y contrato completo, coordinando la propuesta en `contrato-api.md`.
+2. Página: verificar campos reales y un cambio de diagnóstico de extremo a extremo. Caudales y panel de cobertura ya preparados/probados con mocks; no requieren simular resultados en producción.
 3. Ambos: cerrar informe, uso de IA adicional de Matías si lo hubo, resultados reproducidos, capturas finales y defensa. Referencias de diseño y patrones previos de Ciro ya aclaradas.
 4. Verificar instalación/demo completa en otro entorno; registrar código en Git cuando se solicite. Publicar en Vercel conforme a la decisión del grupo y comprobar CORS/HTTPS/despertar de Render.

@@ -6,6 +6,7 @@
 - [Plan de arquitectura del frontend](docs/plan-frontend.md): alcance aprobado, flujos, contrato, decisiones y estado de implementación.
 - [Guía de la página](frontend/README.md): instalación, ejecución, estructura, pruebas y límites de la API.
 - [Revisión de la consigna](docs/revision-consigna.md): requisitos del PDF, evidencia actual y pendientes de frontend, backend e informe.
+- [Contrato de capacidad para integrar con Matías](docs/contrato-api.md): todos los flujos y resumen de suministro/déficit; extensión propuesta y cubierta en frontend, todavía pendiente del backend.
 - [Guía de despliegue](docs/despliegue.md): Vercel para la página y Render para la API, configuración prevista y pasos pendientes antes de publicar.
 - [Instrucciones para agentes de código](AGENTS.md): lectura del contexto, mantenimiento de documentación y criterios de trabajo y pruebas.
 
@@ -21,7 +22,7 @@ npm.cmd ci
 npm.cmd run dev
 ```
 
-Abrir `http://127.0.0.1:5173`. Usa Render sin tener que ejecutar Python localmente. La primera respuesta puede demorarse después de inactividad. Para verificar: `npm.cmd test`, `npm.cmd run lint` y `npm.cmd run build` (incluye TypeScript). Hay 22 pruebas relevantes del frontend aprobadas; no sustituyen los tests del backend. La publicación del frontend en Vercel es el siguiente paso después de revisar la interfaz.
+Abrir `http://127.0.0.1:5173`. Usa Render sin tener que ejecutar Python localmente. La primera respuesta puede demorarse después de inactividad. Para verificar: `npm.cmd test`, `npm.cmd run lint` y `npm.cmd run build` (incluye TypeScript). Hay 33 pruebas relevantes del frontend aprobadas; no sustituyen los tests del backend. El gráfico ya muestra caudales y el panel de abastecimiento está preparado para el resumen propuesto. La integración completa espera los campos del backend; luego se verifica la demo y la publicación prevista en Vercel.
 
 ## Primer paso: generar los datos del caso sintético
 

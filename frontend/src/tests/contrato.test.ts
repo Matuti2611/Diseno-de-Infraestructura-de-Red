@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import muestra from './fixtures/simulacion.json';
 import { validarSimulacion } from '../api/validar';
 import { construirRed, estadoTramo } from '../lib/red';
+import { casoCapacidad } from './fixtures/capacidad';
 
 describe('Límite de datos entre la API y la página', () => {
   it.each([
@@ -52,5 +53,26 @@ describe('Límite de datos entre la API y la página', () => {
     const red = construirRed(validarSimulacion(cambiada));
     expect(red.nodos.some(n => n.id === 'PLANTA')).toBe(false);
     expect(red.ubicacionesFaltantes).toEqual(['PLANTA']);
+  });
+
+  it('acepta el balance de un caso conocido y mantiene el resumen ausente de la API actual', () => {
+    const red = construirRed(validarSimulacion(casoCapacidad(true)));
+    expect(red.resumenCapacidad).toEqual({ demanda_total_m3_dia: 65, caudal_abastecido_m3_dia: 61, deficit_m3_dia: 4 });
+    expect(construirRed(validarSimulacion(muestra)).resumenCapacidad).toBeNull();
+  });
+
+  it.each([
+    ['demanda distinta de la suma de barrios', { demanda_total_m3_dia: 80, caudal_abastecido_m3_dia: 76, deficit_m3_dia: 4 }],
+    ['suministro superior a la demanda', { demanda_total_m3_dia: 65, caudal_abastecido_m3_dia: 70, deficit_m3_dia: 0 }],
+    ['déficit que no completa el balance', { demanda_total_m3_dia: 65, caudal_abastecido_m3_dia: 61, deficit_m3_dia: 0 }],
+    ['déficit omitido', { demanda_total_m3_dia: 65, caudal_abastecido_m3_dia: 61 }],
+  ])('rechaza un resumen con %s', (_nombre, resumen) => {
+    expect(() => validarSimulacion({ ...casoCapacidad(true), resumen_capacidad: resumen })).toThrow();
+  });
+
+  it.each(['costo', 'capacidad_maxima'] as const)('rechaza candidatos que contradicen el %s del tendido seleccionado', campo => {
+    const datos = casoCapacidad();
+    datos.tendidos_candidatos![0][campo] += 10;
+    expect(() => validarSimulacion(datos)).toThrow();
   });
 });

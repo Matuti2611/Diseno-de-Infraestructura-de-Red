@@ -30,12 +30,20 @@ export interface MetricasML {
   r2: number;
 }
 
+/** Extensión propuesta: totales calculados por el backend, nunca por suma de cañerías. */
+export interface ResumenCapacidad {
+  demanda_total_m3_dia: number;
+  caudal_abastecido_m3_dia: number;
+  deficit_m3_dia: number;
+}
+
 export interface SimulacionResponse {
   nodos: NodoRed[];
   tendidos_mst: TendidoMST[];
   flujos: EstadoFlujo[];
   metricas_ml: MetricasML | null;
   tendidos_candidatos?: TendidoMST[];
+  resumen_capacidad?: ResumenCapacidad | null;
 }
 
 export type EstadoTramo = 'candidato' | 'sin-dato' | 'informado' | 'cercano' | 'saturado' | 'sin-capacidad';
@@ -68,6 +76,7 @@ export interface RedVisual {
   tramosCriticos: number;
   flujosInformados: number;
   ubicacionesFaltantes: string[];
+  resumenCapacidad: ResumenCapacidad | null;
 }
 
 export type Seleccion = { tipo: 'nodo' | 'arista'; id: string } | null;

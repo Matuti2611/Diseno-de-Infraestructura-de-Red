@@ -91,7 +91,7 @@ La API todavía omite planta y candidatos: la página complementa su geometría/
 
 La interfaz está verificada localmente con la API desplegada. Su publicación en Vercel sigue pendiente.
 
-**Pendiente específico del frontend de la consigna:** además de recibir todos los flujos, hay que hacer visible el caudal de cada arista en la vista de capacidad. Hoy las etiquetas del gráfico muestran porcentajes solo en tramos críticos, y el caudal disponible se consulta en el detalle/tabla. También falta incorporar demanda, suministro y déficit como diagnóstico completo al ampliar la API. Por eso la vista no se declara terminada solo porque existan grafo y selector.
+**Avance de cierre del frontend:** cada tendido seleccionado muestra su caudal y utilización en el gráfico, o indica **Sin dato**. Se preparó un panel de demanda, suministro, déficit y cobertura para el campo opcional `resumen_capacidad`, validando consistencia antes de presentarlo. El contrato se documenta en [docs/contrato-api.md](docs/contrato-api.md). El servicio actual todavía no entrega ese resumen ni todos los flujos: la pantalla informa diagnóstico incompleto. La integración final sigue pendiente de datos reales del backend, sin activar ejemplos en producción.
 
 ## 6. Pruebas y resultados
 
@@ -107,9 +107,13 @@ Se realizó una simulación base incrementando artificialmente el consumo histó
 
 Estos valores corresponden a la ejecución de backend descrita por Matías, con consumo alterado para el ejemplo; no son el escenario base HTTP actual. Faltan tests matemáticos con resultados conocidos y revisar la selección/implementación de algoritmos antes de atribuirlos a Kruskal o Edmonds–Karp.
 
-**Verificación del frontend e integración real (08/11/2026):** 22 pruebas aprobadas de contrato, cliente e interacción. Cubren datos inválidos, capacidades incompatibles, HTTP fallido y timeout, cero frente a dato ausente, respuestas desordenadas, error/reintento y conservación del escenario anterior. Pasaron lint y build con TypeScript estricto. Estas pruebas no validan los algoritmos del backend.
+**Verificación del frontend e integración real (08/11/2026):** 33 pruebas aprobadas de contrato, cliente e interacción. Cubren datos inválidos, capacidades incompatibles, HTTP fallido y timeout, cero frente a dato ausente, respuestas desordenadas, error/reintento, conservación del escenario anterior, etiquetas de todos los tendidos y balances inconsistentes. Pasaron lint y build con TypeScript estricto. Estas pruebas no validan los algoritmos del backend.
 
-En Edge con Render real se comprobaron 17 nodos dibujados, 26 conexiones candidatas y 16 tendidos MST. La demanda base sumada fue 2167.74 m³/día, con costo 73066.05 unidades. El escenario de +30 % en la tasa mostró 2242.3 m³/día. Solo se recibieron dos registros de flujo en base; 14 quedan como Sin dato. A 390 px no se observó desbordamiento horizontal de la página.
+Un caso mínimo exclusivo de tests fija demandas A=20/B=30 y obtiene suministro 50/déficit 0; otra respuesta fija A=26/B=39 y suministro 61/déficit 4 sobre capacidades PLANTA–A=70/A–B=35. La interfaz presenta ambos balances y cambia el diagnóstico al recibirlos. Son respuestas controladas con resultado conocido; no son predicciones del modelo ni pruebas ejecutadas contra el servicio publicado.
+
+En Edge con Render real se comprobaron 17 nodos dibujados, 26 conexiones candidatas y 16 tendidos MST. La demanda base sumada fue 2167.74 m³/día, con costo 73066.05 unidades. El escenario de +30 % en la tasa mostró 2242.3 m³/día. Se verificaron 16 etiquetas de tendidos: solo se recibieron dos registros de flujo en base; 14 quedan como Sin dato y el diagnóstico como incompleto. A 390 px no se observó desbordamiento horizontal de la página. Se renovaron las capturas tras retirar el indicador live y añadir caudales.
+
+La instalación de dependencias pasó con `npm ci` offline en una copia aislada y el lockfile entregado. Sus pruebas/build no pudieron completarse por permisos de Windows; las comprobaciones aprobadas corresponden al proyecto principal. El arranque desde otra máquina y la demo con el contrato final siguen pendientes.
 
 Capturas de esa revisión, sin resultados fabricados:
 

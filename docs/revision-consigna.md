@@ -8,7 +8,7 @@ Esta revisión contrasta el pedido con el código y la documentación. No reempl
 
 La dirección del proyecto coincide con el TP elegido: cooperativa de agua, regresión de consumo, demandas por nodo, árbol de menor costo y evaluación de capacidad mediante flujo. Los datos sintéticos son una opción expresamente válida. El frontend ya se integra con el backend real, pero el proyecto **todavía no está completo**.
 
-Además de las tareas de Matías hay pendientes de visualización, documentación final y verificación de entrega. No hace falta sumar páginas comerciales, autenticación, base de datos, efectos decorativos o tecnologías nuevas para cumplir.
+Se completaron del lado frontend las etiquetas de caudal y el panel para el balance opcional de abastecimiento. Además de las tareas de Matías quedan la verificación conjunta con datos completos reales, documentación final y entrega. No hace falta sumar páginas comerciales, autenticación, base de datos, efectos decorativos o tecnologías nuevas para cumplir.
 
 ## Requisitos y evidencia
 
@@ -22,15 +22,15 @@ Además de las tareas de Matías hay pendientes de visualización, documentació
 | Implementar Kruskal o Prim (p. 7) | `mst.py` delega a `nx.minimum_spanning_tree`; el comentario menciona Kruskal. | Pendiente de Matías: cerrar implementación exigida y pruebas. No declarar desarrollo propio de los pasos del algoritmo. |
 | Implementar Ford–Fulkerson o Edmonds–Karp y comprobar cobertura (p. 7) | `flujo.py` arma la red y usa `nx.maximum_flow`, sin `flow_func` explícito; suministro se calcula pero se descarta en respuesta. | Parcial: implementación exigida, capacidades/conservación, suministro/déficit y tests. El comentario no prueba que se ejecuta Edmonds–Karp. |
 | Tendidos posibles con red mínima resaltada (p. 7) | SVG, selección de elementos, candidatos/MST y tabla/costo. | Cubierto para el caso actual; planta/candidatos se complementan con CSV versionados hasta tener contrato completo. |
-| Flujo en cada arista y saturación/cercanía (p. 8) | Tabla/detalle del flujo recibido; estados diferenciados. API base informa 2 de 16 tramos; gráfico etiqueta porcentajes solo en críticos. | Parcial de backend **y frontend**: API con todos los flujos y representación visible del caudal de cada arista en la vista de red. |
-| Selector de crecimiento que cambie el diagnóstico (p. 8) | Base/+10 %/+30 %, llamadas reales y demanda actualizada; porcentaje aplicado a tasa anual poblacional. | Implementado el selector; falta mostrar diagnóstico completo comparando demanda, suministro y déficit. Probar un caso que cambie el resultado. |
+| Flujo en cada arista y saturación/cercanía (p. 8) | Cada arista seleccionada tiene etiqueta de caudal/utilización o Sin dato; tabla/detalle y estados diferenciados. API base informa 2 de 16 tramos. | Frontend preparado y probado; completar todos los flujos en API y verificar los datos reales. |
+| Selector de crecimiento que cambie el diagnóstico (p. 8) | Base/+10 %/+30 %, llamadas reales y demanda actualizada; panel preparado para resumen opcional. Un caso controlado pasa de cobertura a déficit al cambiar respuesta. | Falta resumen real del backend y validación de escenarios end-to-end. Los mocks no prueban el predictor ni el algoritmo Python. |
 | Backend con cálculos y frontend que consuma API (pp. 2–3) | FastAPI en Render y React/TypeScript; navegador no calcula predicciones, MST o flujo. | Integración real comprobada; completar contrato y verificar desde entorno limpio. |
 | Código Git con historial incremental (p. 3) | Hay historial de ambos integrantes y merge conservando trabajo. El frontend actual aún tiene cambios sin commit. | Registrar grupos de cambios cuando el usuario solicite commits y verificar su publicación antes de entregar. |
 | Informe con diseño, dataset, features, metodología, algoritmos e integración (pp. 3–4) | `Informe.md`, actualizado para distinguir estado real de propuestas. | Borrador avanzado; Matías debe cerrar algoritmos y resultados reproducibles. |
-| Capturas de frontend funcionando (p. 4) | Tres imágenes de navegador real enlazadas desde informe. | Disponibles; renovar al terminar vista completa y cambios finales. Las actuales son anteriores a retirar indicador/hora. |
+| Capturas de frontend funcionando (p. 4) | Tres imágenes de navegador real renovadas con etiquetas y diagnóstico incompleto, enlazadas desde informe. | Disponibles; renovar al cerrar integración con resumen real. |
 | Uso de IA: herramientas, partes, prompts, errores y reflexión (p. 3) | Sección 7 con Codex/Gemini, paletasdecolores.com.ar, exploración de diseños en Figma, patrones del proyecto previo de Ciro, instrucciones resumidas y corrección del indicador live. | Sección armada con referencias aclaradas por Ciro; revisar aportes adicionales de Matías si los hubo. No se atribuyen copias literales de código no inspeccionado. |
 | Limitaciones y extensiones (p. 4) | Sección 8 con datos sintéticos, simplificación hidráulica, tiempo, incertidumbre, MST/capacidad y pendientes. | Documentado; revisar al cerrar implementación. |
-| Demo end-to-end e instalación desde otro entorno (p. 4) | Frontend probado contra Render; README raíz y guía frontend. | Parcial: demo completa tras contrato nuevo y ensayo desde entorno limpio con dependencias/modelo compatibles. |
+| Demo end-to-end e instalación desde otro entorno (p. 4) | Frontend probado contra Render; instalación aislada de dependencias pasó con lockfile. README raíz y guía frontend. | Parcial: build/tests aprobados en proyecto principal, bloqueados por permisos Windows en la copia aislada. Falta demo con contrato completo y ensayo desde otra máquina de frontend/backend. |
 
 ## Aclaraciones que evitan trabajo innecesario
 
@@ -43,8 +43,8 @@ Además de las tareas de Matías hay pendientes de visualización, documentació
 
 ## Trabajo que queda fuera de la implementación de Matías
 
-1. **Página:** mostrar el caudal de todos los tramos en la vista de capacidad, manteniendo legibilidad en móvil. Hoy solo hay etiquetas porcentuales en críticos.
-2. **Página e integración:** incorporar suministro/déficit, indicar si la red alcanza y probar un escenario con cambio de diagnóstico. Depende de los nuevos campos del backend; no inventarlos mientras faltan.
+1. **Página, completado:** etiquetas de caudal de todos los tramos y tratamiento explícito de dato ausente. Revisado en escritorio/móvil sin desbordamiento de página.
+2. **Página preparada / integración pendiente:** panel de suministro/déficit/cobertura y pruebas de caso conocido ya implementados. Coordinar `contrato-api.md` con Matías y validar esos campos reales; no inventarlos mientras faltan.
 3. **Documentación:** conservar las referencias aclaradas por Ciro (paleta, exploración en Figma y patrones de su proyecto anterior) y completar aportes adicionales de Matías si los hubo. No hace falta sumar funciones de otro proyecto que no pertenecen a este TP.
 4. **Ambos:** cerrar informe con resultados reproducidos, capturas finales, registro de IA completo y comprensión del código para la defensa oral.
 5. **Entrega:** comprobar instalación en otro entorno, demo completa y código final en Git. Publicar frontend en Vercel si se mantiene la decisión del grupo.
@@ -55,5 +55,6 @@ Además de las tareas de Matías hay pendientes de visualización, documentació
 - Revisados generadores, CSV, entrenamiento, MST/flujo/pipeline/API y gráfico/tabla/adaptación frontend.
 - Ejecutado `python -m unittest discover -s backend/tests -p test_datos.py -v`: un test aprobado.
 - Comprobados conteos, columnas de CSV y que las 600 etiquetas respetan la regla de cinco años con ruido de ±5 %.
-- Se conservan los resultados previos de 22 tests, lint y build del frontend; no se repitieron por este cambio exclusivamente documental.
-- No se modificaron algoritmos ni se reprodujeron las métricas de ML. No se publicó, hizo commit o push durante esta revisión.
+- Tras los avances del frontend pasaron 33 tests, lint y build con TypeScript en el proyecto principal. Se comprobó instalación aislada de dependencias; su build/tests quedaron bloqueados por permisos de Windows y no se declaran aprobados.
+- Se revisaron en Edge la API real, 16 etiquetas, diagnóstico incompleto sin resumen, escenarios base/+30 % y móvil de 390 px sin desbordamiento. Se corrigió superposición de etiquetas con nombres de nodos y se renovaron capturas.
+- No se modificaron algoritmos ni se reprodujeron métricas de ML. Los cambios previos se agruparon en commits de implementación y documentación por solicitud del usuario; los avances de capacidad forman otro grupo. No se hizo push ni se publicó el frontend.

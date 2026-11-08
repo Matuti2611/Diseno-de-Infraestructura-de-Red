@@ -25,7 +25,9 @@ El servicio de Render puede tardar en responder después de inactividad. La inte
 - Ver demanda proyectada, costo del MST y utilización de los tramos informados por la API.
 - Consultar las métricas enviadas por el backend y las limitaciones del caso sintético.
 
-La API actual devuelve 16 barrios y 16 tendidos, pero solo dos registros de flujo en el escenario base. Los otros 14 se identifican como **Sin dato**; no se interpretan como flujo cero. Se distingue utilización desde 90 % de saturación al 100 % mediante el cociente flujo/capacidad. Caudal abastecido y déficit total siguen pendientes de la API.
+La API actual devuelve 16 barrios y 16 tendidos, pero solo dos registros de flujo en el escenario base. Cada tendido seleccionado tiene una etiqueta de caudal y utilización en el gráfico; los otros 14 se identifican como **Sin dato**, sin asumir cero. Las etiquetas verticales se ubican al costado para preservar los nombres de los nodos. Se distingue utilización desde 90 % de saturación al 100 % mediante el cociente flujo/capacidad.
+
+El panel de abastecimiento ya está preparado para mostrar demanda, suministro, déficit y cobertura mediante la extensión opcional `resumen_capacidad`. Esa extensión todavía no existe en Render: hoy muestra **Diagnóstico incompleto**, incluso si se conocen todos los caudales, porque no deduce suministro sumando cañerías. El contrato propuesto y un caso de prueba para Matías están en [docs/contrato-api.md](../docs/contrato-api.md). Se valida que los totales coincidan con las demandas y el balance antes de presentarlos.
 
 ## Archivos y fuentes
 
@@ -58,9 +60,11 @@ npm.cmd run typecheck
 npm.cmd run build
 ```
 
-El 08/11/2026 pasaron 22 pruebas, lint y build (que incluye TypeScript). Las pruebas detectan datos inválidos, flujos imposibles, respuestas HTTP fallidas, espera agotada, confusión entre cero y dato ausente, escenarios desordenados, reintento y pérdida del resultado anterior. Se verificaron también búsqueda y selección por teclado. Son pruebas del frontend; no demuestran la corrección matemática del backend.
+El 08/11/2026 pasaron 33 pruebas, lint y build (que incluye TypeScript). Las pruebas detectan datos inválidos, flujos imposibles, respuestas HTTP fallidas, espera agotada, confusión entre cero y dato ausente, escenarios desordenados, reintento y pérdida del resultado anterior. También verifican búsqueda/teclado, caudales de tramos no críticos y cambio de cobertura a déficit con respuestas controladas. Se rechazan resúmenes que contradicen la demanda o el balance y candidatos con costos/capacidades distintos del MST. Son pruebas del frontend; no demuestran la corrección matemática del backend.
 
 Se probó en Edge con Render real: 17 nodos, 26 conexiones candidatas, 16 tendidos seleccionados, demanda base 2167.74 m³/día y escenario +30 % con 2242.3 m³/día mostrados. A 390 px no hay desbordamiento horizontal de la página; el gráfico mantiene su desplazamiento interno. Capturas en [docs/capturas](../docs/capturas/).
+
+La instalación con `npm.cmd ci --offline --no-audit --no-fund` pasó en una copia aislada con el lockfile y caché disponibles. La compilación/pruebas de esa copia quedaron bloqueadas por permisos del entorno Windows (esbuild en aislamiento y lectura de archivos al elevar); no se declaran aprobadas allí. Falta el ensayo en otra máquina. El proyecto principal tiene sus comprobaciones aprobadas.
 
 `package-lock.json` fija la instalación. Los overrides de `minimatch` están limitados a herramientas de lint para resolver el aviso GHSA-g3hv-75wg-m249 de la versión transitiva anterior; se comprobó el árbol instalado y el lint con la versión 11.0.5. La instalación final informó cero vulnerabilidades conocidas. Los artefactos de QA y perfiles temporales quedan ignorados en `.preview/` y excluidos del watcher de Vite.
 
