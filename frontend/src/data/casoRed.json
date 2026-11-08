@@ -1,0 +1,306 @@
+{
+  "fuente": "backend/data/raw: planta.csv, zonas.csv y aristas_candidatas.csv",
+  "planta": {
+    "id": "PLANTA",
+    "latitud": -32.95,
+    "longitud": -60.65
+  },
+  "zonas": [
+    {
+      "id": "Z01",
+      "latitud": -32.954,
+      "longitud": -60.65,
+      "poblacion": 854,
+      "tipo_zona": "residencial"
+    },
+    {
+      "id": "Z02",
+      "latitud": -32.954,
+      "longitud": -60.645,
+      "poblacion": 342,
+      "tipo_zona": "comercial"
+    },
+    {
+      "id": "Z03",
+      "latitud": -32.954,
+      "longitud": -60.64,
+      "poblacion": 289,
+      "tipo_zona": "residencial"
+    },
+    {
+      "id": "Z04",
+      "latitud": -32.954,
+      "longitud": -60.635,
+      "poblacion": 438,
+      "tipo_zona": "residencial"
+    },
+    {
+      "id": "Z05",
+      "latitud": -32.958,
+      "longitud": -60.65,
+      "poblacion": 865,
+      "tipo_zona": "comercial"
+    },
+    {
+      "id": "Z06",
+      "latitud": -32.958,
+      "longitud": -60.645,
+      "poblacion": 484,
+      "tipo_zona": "comercial"
+    },
+    {
+      "id": "Z07",
+      "latitud": -32.958,
+      "longitud": -60.64,
+      "poblacion": 914,
+      "tipo_zona": "residencial"
+    },
+    {
+      "id": "Z08",
+      "latitud": -32.958,
+      "longitud": -60.635,
+      "poblacion": 981,
+      "tipo_zona": "residencial"
+    },
+    {
+      "id": "Z09",
+      "latitud": -32.962,
+      "longitud": -60.65,
+      "poblacion": 1067,
+      "tipo_zona": "residencial"
+    },
+    {
+      "id": "Z10",
+      "latitud": -32.962,
+      "longitud": -60.645,
+      "poblacion": 670,
+      "tipo_zona": "residencial"
+    },
+    {
+      "id": "Z11",
+      "latitud": -32.962,
+      "longitud": -60.64,
+      "poblacion": 765,
+      "tipo_zona": "residencial"
+    },
+    {
+      "id": "Z12",
+      "latitud": -32.962,
+      "longitud": -60.635,
+      "poblacion": 570,
+      "tipo_zona": "residencial"
+    },
+    {
+      "id": "Z13",
+      "latitud": -32.966,
+      "longitud": -60.65,
+      "poblacion": 433,
+      "tipo_zona": "comercial"
+    },
+    {
+      "id": "Z14",
+      "latitud": -32.966,
+      "longitud": -60.645,
+      "poblacion": 1087,
+      "tipo_zona": "residencial"
+    },
+    {
+      "id": "Z15",
+      "latitud": -32.966,
+      "longitud": -60.64,
+      "poblacion": 573,
+      "tipo_zona": "residencial"
+    },
+    {
+      "id": "Z16",
+      "latitud": -32.966,
+      "longitud": -60.635,
+      "poblacion": 918,
+      "tipo_zona": "industrial"
+    }
+  ],
+  "aristas": [
+    {
+      "origen": "PLANTA",
+      "destino": "Z01",
+      "costo": 5499.32,
+      "capacidad_maxima": 2500.0,
+      "distancia_m": 444.8
+    },
+    {
+      "origen": "PLANTA",
+      "destino": "Z02",
+      "costo": 7995.33,
+      "capacidad_maxima": 2500.0,
+      "distancia_m": 644.6
+    },
+    {
+      "origen": "Z01",
+      "destino": "Z02",
+      "costo": 4431.17,
+      "capacidad_maxima": 2000.0,
+      "distancia_m": 466.5
+    },
+    {
+      "origen": "Z01",
+      "destino": "Z05",
+      "costo": 4147.83,
+      "capacidad_maxima": 1200.0,
+      "distancia_m": 444.8
+    },
+    {
+      "origen": "Z02",
+      "destino": "Z03",
+      "costo": 5663.82,
+      "capacidad_maxima": 3000.0,
+      "distancia_m": 466.5
+    },
+    {
+      "origen": "Z02",
+      "destino": "Z06",
+      "costo": 5094.05,
+      "capacidad_maxima": 2000.0,
+      "distancia_m": 444.8
+    },
+    {
+      "origen": "Z03",
+      "destino": "Z04",
+      "costo": 4947.29,
+      "capacidad_maxima": 750.0,
+      "distancia_m": 466.5
+    },
+    {
+      "origen": "Z03",
+      "destino": "Z07",
+      "costo": 4907.12,
+      "capacidad_maxima": 1200.0,
+      "distancia_m": 444.8
+    },
+    {
+      "origen": "Z04",
+      "destino": "Z08",
+      "costo": 4994.99,
+      "capacidad_maxima": 3000.0,
+      "distancia_m": 444.8
+    },
+    {
+      "origen": "Z05",
+      "destino": "Z06",
+      "costo": 4320.69,
+      "capacidad_maxima": 750.0,
+      "distancia_m": 466.5
+    },
+    {
+      "origen": "Z05",
+      "destino": "Z09",
+      "costo": 4680.17,
+      "capacidad_maxima": 1200.0,
+      "distancia_m": 444.8
+    },
+    {
+      "origen": "Z06",
+      "destino": "Z07",
+      "costo": 4585.1,
+      "capacidad_maxima": 2000.0,
+      "distancia_m": 466.5
+    },
+    {
+      "origen": "Z06",
+      "destino": "Z10",
+      "costo": 5327.66,
+      "capacidad_maxima": 3000.0,
+      "distancia_m": 444.8
+    },
+    {
+      "origen": "Z07",
+      "destino": "Z08",
+      "costo": 5342.63,
+      "capacidad_maxima": 2000.0,
+      "distancia_m": 466.5
+    },
+    {
+      "origen": "Z07",
+      "destino": "Z11",
+      "costo": 4498.15,
+      "capacidad_maxima": 2000.0,
+      "distancia_m": 444.8
+    },
+    {
+      "origen": "Z08",
+      "destino": "Z12",
+      "costo": 4366.69,
+      "capacidad_maxima": 1200.0,
+      "distancia_m": 444.8
+    },
+    {
+      "origen": "Z09",
+      "destino": "Z10",
+      "costo": 4420.55,
+      "capacidad_maxima": 750.0,
+      "distancia_m": 466.5
+    },
+    {
+      "origen": "Z09",
+      "destino": "Z13",
+      "costo": 4244.95,
+      "capacidad_maxima": 1200.0,
+      "distancia_m": 444.8
+    },
+    {
+      "origen": "Z10",
+      "destino": "Z11",
+      "costo": 4932.32,
+      "capacidad_maxima": 2000.0,
+      "distancia_m": 466.5
+    },
+    {
+      "origen": "Z10",
+      "destino": "Z14",
+      "costo": 4635.85,
+      "capacidad_maxima": 2000.0,
+      "distancia_m": 444.8
+    },
+    {
+      "origen": "Z11",
+      "destino": "Z12",
+      "costo": 5773.26,
+      "capacidad_maxima": 1200.0,
+      "distancia_m": 466.5
+    },
+    {
+      "origen": "Z11",
+      "destino": "Z15",
+      "costo": 4706.53,
+      "capacidad_maxima": 3000.0,
+      "distancia_m": 444.8
+    },
+    {
+      "origen": "Z12",
+      "destino": "Z16",
+      "costo": 4415.56,
+      "capacidad_maxima": 750.0,
+      "distancia_m": 444.8
+    },
+    {
+      "origen": "Z13",
+      "destino": "Z14",
+      "costo": 4345.75,
+      "capacidad_maxima": 2000.0,
+      "distancia_m": 466.5
+    },
+    {
+      "origen": "Z14",
+      "destino": "Z15",
+      "costo": 5547.3,
+      "capacidad_maxima": 750.0,
+      "distancia_m": 466.5
+    },
+    {
+      "origen": "Z15",
+      "destino": "Z16",
+      "costo": 4549.18,
+      "capacidad_maxima": 2000.0,
+      "distancia_m": 466.5
+    }
+  ]
+}

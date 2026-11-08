@@ -1,0 +1,235 @@
+{
+  "nodos": [
+    {
+      "id": "Z01",
+      "latitud": -32.954,
+      "longitud": -60.65,
+      "tipo_zona": "residencial",
+      "demanda_diaria_proyectada": 140.80497153189532
+    },
+    {
+      "id": "Z02",
+      "latitud": -32.954,
+      "longitud": -60.645,
+      "tipo_zona": "comercial",
+      "demanda_diaria_proyectada": 94.37754492930002
+    },
+    {
+      "id": "Z03",
+      "latitud": -32.954,
+      "longitud": -60.64,
+      "tipo_zona": "residencial",
+      "demanda_diaria_proyectada": 29.752724210133344
+    },
+    {
+      "id": "Z04",
+      "latitud": -32.954,
+      "longitud": -60.635,
+      "tipo_zona": "residencial",
+      "demanda_diaria_proyectada": 54.403625570822925
+    },
+    {
+      "id": "Z05",
+      "latitud": -32.958,
+      "longitud": -60.65,
+      "tipo_zona": "comercial",
+      "demanda_diaria_proyectada": 206.12848690087063
+    },
+    {
+      "id": "Z06",
+      "latitud": -32.958,
+      "longitud": -60.645,
+      "tipo_zona": "comercial",
+      "demanda_diaria_proyectada": 112.64311399598874
+    },
+    {
+      "id": "Z07",
+      "latitud": -32.958,
+      "longitud": -60.64,
+      "tipo_zona": "residencial",
+      "demanda_diaria_proyectada": 137.2537740368831
+    },
+    {
+      "id": "Z08",
+      "latitud": -32.958,
+      "longitud": -60.635,
+      "tipo_zona": "residencial",
+      "demanda_diaria_proyectada": 138.29162489624758
+    },
+    {
+      "id": "Z09",
+      "latitud": -32.962,
+      "longitud": -60.65,
+      "tipo_zona": "residencial",
+      "demanda_diaria_proyectada": 154.13544436661962
+    },
+    {
+      "id": "Z10",
+      "latitud": -32.962,
+      "longitud": -60.645,
+      "tipo_zona": "residencial",
+      "demanda_diaria_proyectada": 121.5764638214299
+    },
+    {
+      "id": "Z11",
+      "latitud": -32.962,
+      "longitud": -60.64,
+      "tipo_zona": "residencial",
+      "demanda_diaria_proyectada": 143.80671383058586
+    },
+    {
+      "id": "Z12",
+      "latitud": -32.962,
+      "longitud": -60.635,
+      "tipo_zona": "residencial",
+      "demanda_diaria_proyectada": 90.25903503921514
+    },
+    {
+      "id": "Z13",
+      "latitud": -32.966,
+      "longitud": -60.65,
+      "tipo_zona": "comercial",
+      "demanda_diaria_proyectada": 126.85433551823353
+    },
+    {
+      "id": "Z14",
+      "latitud": -32.966,
+      "longitud": -60.645,
+      "tipo_zona": "residencial",
+      "demanda_diaria_proyectada": 183.7069120126435
+    },
+    {
+      "id": "Z15",
+      "latitud": -32.966,
+      "longitud": -60.64,
+      "tipo_zona": "residencial",
+      "demanda_diaria_proyectada": 96.12581322321752
+    },
+    {
+      "id": "Z16",
+      "latitud": -32.966,
+      "longitud": -60.635,
+      "tipo_zona": "industrial",
+      "demanda_diaria_proyectada": 337.62100559480336
+    }
+  ],
+  "tendidos_mst": [
+    {
+      "origen": "PLANTA",
+      "destino": "Z01",
+      "costo": 5499.32,
+      "capacidad_maxima": 2500
+    },
+    {
+      "origen": "Z01",
+      "destino": "Z05",
+      "costo": 4147.83,
+      "capacidad_maxima": 1200
+    },
+    {
+      "origen": "Z01",
+      "destino": "Z02",
+      "costo": 4431.17,
+      "capacidad_maxima": 2000
+    },
+    {
+      "origen": "Z05",
+      "destino": "Z06",
+      "costo": 4320.69,
+      "capacidad_maxima": 750
+    },
+    {
+      "origen": "Z05",
+      "destino": "Z09",
+      "costo": 4680.17,
+      "capacidad_maxima": 1200
+    },
+    {
+      "origen": "Z03",
+      "destino": "Z07",
+      "costo": 4907.12,
+      "capacidad_maxima": 1200
+    },
+    {
+      "origen": "Z03",
+      "destino": "Z04",
+      "costo": 4947.29,
+      "capacidad_maxima": 750
+    },
+    {
+      "origen": "Z06",
+      "destino": "Z07",
+      "costo": 4585.1,
+      "capacidad_maxima": 2000
+    },
+    {
+      "origen": "Z07",
+      "destino": "Z11",
+      "costo": 4498.15,
+      "capacidad_maxima": 2000
+    },
+    {
+      "origen": "Z08",
+      "destino": "Z12",
+      "costo": 4366.69,
+      "capacidad_maxima": 1200
+    },
+    {
+      "origen": "Z09",
+      "destino": "Z13",
+      "costo": 4244.95,
+      "capacidad_maxima": 1200
+    },
+    {
+      "origen": "Z09",
+      "destino": "Z10",
+      "costo": 4420.55,
+      "capacidad_maxima": 750
+    },
+    {
+      "origen": "Z11",
+      "destino": "Z15",
+      "costo": 4706.53,
+      "capacidad_maxima": 3000
+    },
+    {
+      "origen": "Z12",
+      "destino": "Z16",
+      "costo": 4415.56,
+      "capacidad_maxima": 750
+    },
+    {
+      "origen": "Z13",
+      "destino": "Z14",
+      "costo": 4345.75,
+      "capacidad_maxima": 2000
+    },
+    {
+      "origen": "Z15",
+      "destino": "Z16",
+      "costo": 4549.18,
+      "capacidad_maxima": 2000
+    }
+  ],
+  "flujos": [
+    {
+      "origen": "Z01",
+      "destino": "Z05",
+      "flujo_actual": 1200,
+      "capacidad_maxima": 1200,
+      "saturada": true
+    },
+    {
+      "origen": "Z05",
+      "destino": "Z06",
+      "flujo_actual": 750,
+      "capacidad_maxima": 750,
+      "saturada": true
+    }
+  ],
+  "metricas_ml": {
+    "mae": 131.28,
+    "rmse": 172.97,
+    "r2": 0.9939
+  }
+}

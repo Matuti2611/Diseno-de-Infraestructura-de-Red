@@ -1,4 +1,4 @@
-# Contexto del proyecto para agentes de código
+﻿# Contexto del proyecto para agentes de código
 
 Última actualización: 2026-11-08.
 
@@ -6,134 +6,139 @@
 
 ## Objetivo y consigna
 
-Trabajo integrador de ML, grafos y desarrollo web para una cooperativa de agua. Se debe proyectar el consumo futuro de las zonas, calcular una red de tendidos de menor costo y comprobar si sus capacidades permiten abastecer esa demanda. La consigna indica entrega el 08/11/2026.
+Trabajo integrador de ML, grafos y desarrollo web para una cooperativa de agua. Proyectar el consumo a cinco años, calcular tendidos de menor costo y comprobar si permiten abastecer la demanda. La consigna indica entrega el 08/11/2026. No se trata de una red de módems.
 
-Recorrido esperado: datos → regresión → demanda por nodo → Kruskal o Prim → Ford–Fulkerson o Edmonds–Karp → API → frontend.
+El 08/11 se releyó el PDF completo: consignas generales pp. 1–4 y TP elegido pp. 7–8. La matriz de cumplimiento está preparada para el siguiente commit documental. El proyecto no se declara completo: además del backend hay pendientes de visualización de todos los caudales, diagnóstico, documentación y entrega. El enunciado exige demo e instrucciones reproducibles; no obliga a publicar en Vercel ni contratar hosting.
 
-## Responsabilidades y forma de trabajo
+Recorrido: datos → regresión → demanda por nodo → Kruskal o Prim → Ford–Fulkerson o Edmonds–Karp → API → frontend.
 
-- Usuario: página en React, visualización de redes y experiencia de uso.
-- Matías: backend, modelo predictivo y algoritmos de infraestructura.
-- Compartido: contrato de datos, integración, pruebas del recorrido completo, informe y defensa.
-- El usuario pide tests que detecten errores relevantes y resultados incorrectos; no tests agregados únicamente para que pasen.
-- El usuario pidió definir producto, flujos, datos, arquitectura, riesgos y etapas antes de programar la página. El plan está en `plan-frontend.md`; el 2026-11-07 autorizó guardar esta documentación en un commit y arrancar después de su push. No volver a pedir aprobación para el mismo alcance inicial.
+## Responsabilidades y alcance autorizado
+
+- Usuario: página React, visualización y experiencia de uso.
+- Matías: backend, modelo predictivo e infraestructura de grafos.
+- Compartido: contrato, integración, pruebas completas, informe y defensa.
+- El usuario pide tests que detecten errores relevantes, no pruebas agregadas únicamente para que pasen.
+- Se aprobó React + TypeScript estricto + Vite, CSS propio y SVG, con vistas Tendidos y Capacidad, escenarios y tabla. El 08/11 autorizó continuar la página; esta etapa ya está implementada localmente. No volver a pedir aprobación por el mismo alcance.
+- Hosting elegido: Vercel para frontend y Render para FastAPI. Efectos decorativos pospuestos. Sin autenticación, base de datos ni servicios nuevos.
+- El usuario autorizó agrupar lo existente en commits y luego continuar con los pendientes del frontend. El primer grupo incorpora página, configuración, pruebas y capturas; el siguiente reúne informe y revisión de consigna. El usuario realiza los push; no se autorizó publicar servicios.
 
 ## Estado del repositorio
 
-El 2026-11-07 se ejecutó `git fetch origin`: el remoto avanzó de `3139802` a `7ed8245` con siete commits de Matías (ML, modelo exportado, grafos, API e informe). La rama local conservaba `19e4f36` con el contexto y el plan de frontend.
+La integración autorizada con Matías quedó en `49707da`, conservando ambos historiales y sin conflictos. El log compartido de Render confirma que ese commit fue publicado. Después se crearon `9031a6e` (despliegue) y `7692bbb` (paleta). Al iniciar esta etapa la rama estaba limpia, `main` dos commits por delante de la referencia local `origin/main`. No se consultó el remoto de nuevo durante esta implementación.
 
-El usuario autorizó integrar los cambios. Se aplicó un merge conservando ambos historiales; no hubo conflictos de contenido. El código del backend, el modelo y el informe de Matías se conservan sin modificaciones. La integración quedó en `49707da`; el log de Render compartido el 2026-11-08 confirma que ese commit ya fue publicado por el usuario en GitHub. El frontend continúa sin implementar y no se instalaron dependencias nuevas en este entorno.
+Esta etapa implementa `frontend/` y actualiza documentación y `.gitignore`; no modifica código, datos ni modelo del backend. Se prepara el commit de implementación con 22 pruebas, lint y build ya aprobados; los cambios de informe, README raíz, plan, despliegue y revisión de consigna se conservan en el árbol de trabajo para el siguiente commit. No se publicó el frontend.
 
 ## Página / frontend
 
-**Implementado:** estructura de nombres de archivos en `frontend/`; los archivos de código, `package.json`, `tsconfig.json` y `vite.config.ts` siguen vacíos.
+**Implementado y probado:** React, TypeScript estricto, Vite y CSS propio con la paleta `#44749d`, `#c6d4e1`, `#ffffff`, `#ebe7e0`, `#bdb8ad`. Texto oscuro derivado; rojo/ámbar para capacidad. Sin biblioteca de animación ni mapas externos.
 
-**Base aprobada para la siguiente etapa:** conservar React + TypeScript estricto + Vite; CSS propio y SVG para el grafo de 17 nodos; un panel con vistas Tendidos y Capacidad, selector de escenarios y tabla accesible. El diseño visual detallado se desarrolla dentro de ese alcance.
+- Panel con Tendidos y Capacidad, gráfico SVG seleccionable, detalle de barrio/conexión, tabla con búsqueda, leyenda y resumen de demanda/costo/tramos críticos.
+- Escenarios base, +10 % y +30 % conectados a API real. El texto aclara que modifican la **tasa de crecimiento poblacional**, como el predictor actual, no directamente el consumo.
+- Cliente aislado en `src/api/`, validación JSON y de relaciones nodos/aristas/flujos, cancelación y timeout de 90 segundos. Error, reintento, red vacía y resultado previo identificado por escenario. Respuestas viejas no sobrescriben escenarios nuevos.
+- Nunca se sustituyen errores por ejemplos. Los fixtures JSON están solo en tests. Las métricas se muestran como reportadas por API, sin declararlas reproducidas.
+- Flujos ausentes: **Sin dato**, no cero. Cercanía desde 90 % y saturación al 100 % se distinguen por flujo/capacidad, pese al booleano actual del backend. No se inventan suministro ni déficit.
+- La API omite planta y candidatos. `src/data/casoRed.json` aporta geometría, costos y capacidades de CSV versionados, solo si coinciden barrios y MST con el caso recibido. Si no coinciden, se usa la respuesta sin candidatos locales y se avisa si faltan coordenadas. Se prioriza `tendidos_candidatos` de la API si lo incorpora.
+- Sincronización manual: `python frontend/scripts/sincronizar_datos.py` desde raíz. La copia no contiene predicciones ni ejecuta algoritmos. Vercel compila el JSON versionado sin Python.
+- En móvil gráfico y tabla tienen desplazamiento interno para mantener etiquetas legibles. Selección por teclado y estados con texto.
+- Revisión del usuario: evitar indicadores tipo «en vivo». Se quitaron el distintivo de conexión/API y la hora de última respuesta; solo se conserva el aviso sencillo de cálculo y los errores/reintento. Selector y nota del gráfico explican que el porcentaje aumenta la tasa poblacional y que la red mantiene ubicaciones/costos. Sin cambios al backend.
 
-**Paleta aportada por el usuario (2026-11-08):** `#44749d` principal, `#c6d4e1` apoyo, `#ffffff` superficies, `#ebe7e0` fondo y `#bdb8ad` separadores decorativos. Los roles y consideraciones de contraste están en `plan-frontend.md`. Los efectos decorativos quedan para después; no agregar bibliotecas de animación para esta primera etapa. Solo se documentó la paleta: todavía no hay CSS ni interfaz implementados.
+Guía: `../frontend/README.md`. Decisiones: `plan-frontend.md`. Capturas reales: `capturas/`.
 
-**Integración prevista:** cliente de API aislado de los componentes y modo demostración explícito mientras Matías desarrolla el backend. Ningún fallback silencioso de API fallida a datos simulados. No calcular MST, predicciones ni flujo en el navegador.
+**Próximo paso:** revisión visual del usuario, luego Vercel: raíz `frontend`, build `npm run build`, salida `dist`, Node 24.x y `VITE_API_URL=https://infraestructura-red-api.onrender.com`. Aún no se creó ni publicó ese servicio.
 
-**Próximo paso:** inicializar la aplicación y su primera vista con la paleta elegida; acordar con Matías los campos faltantes de la API ya publicada y verificada. La parte visual puede avanzar con datos de ejemplo identificados como tales mientras se completa el contrato real.
+**Pendiente confirmado al releer la consigna:** `MapaRed.tsx` etiqueta solo porcentajes en tramos críticos; no muestra el caudal de cada arista en el gráfico. Al recibir todos los flujos hay que completar esa representación, además de suministro/déficit y estado de cobertura. No basta con que Matías amplíe el JSON para declarar terminada la página.
 
 ## Datos
 
-**Implementado:**
-
-- `backend/app/data/generar_dataset.py`: genera datos con semilla 42 por defecto; usa únicamente biblioteca estándar de Python.
-- `backend/app/data/generar_grafo.py`: cuadrícula 4 × 4 más dos conexiones candidatas desde la planta.
-- `backend/data/raw/planta.csv`: una planta.
-- `backend/data/raw/zonas.csv`: 16 barrios para proyectar, sin la variable objetivo.
-- `backend/data/raw/historial_consumo.csv`: 600 observaciones sintéticas independientes con `consumo_futuro`; no son mediciones históricas reales.
-- `backend/data/raw/aristas_candidatas.csv`: 26 conexiones con distancia, costo y capacidad.
-
-**Reglas relevantes:** consumo en m³/mes, proyección a cinco años, capacidades en m³/día, costos convencionales. Dividir el consumo mensual por 30 antes del diagnóstico. Las reglas detalladas están en `../Informe.md`. La validación con estos datos mide aprendizaje de reglas sintéticas, no precisión sobre una cooperativa real.
-
-El pipeline ya carga `zonas.csv` con Pandas y el MST carga las aristas. `cargar.py` sigue vacío. Las rutas de datos y modelo en `config.py` son relativas al directorio de ejecución: por ahora, iniciar desde la raíz del repositorio.
+- `generar_dataset.py`: biblioteca estándar, semilla 42; planta, 16 barrios, 600 observaciones sintéticas independientes y 26 aristas candidatas.
+- `generar_grafo.py`: cuadrícula 4 × 4 más dos enlaces desde planta.
+- Consumo m³/mes, capacidad m³/día, horizonte cinco años, costos convencionales. El pipeline divide por 30 para convertir a diario.
+- La evaluación mide aprendizaje de reglas sintéticas, no precisión sobre una cooperativa real.
+- `cargar.py` sigue vacío. Rutas de `config.py` relativas: ejecutar backend desde raíz.
+- Coordinar cambios CSV con Matías, sincronizar geometría de frontend y revisar diferencias antes de publicar.
 
 ## Machine learning
 
-Matías implementó `entrenar.py`: lectura del historial, exclusión del ID y objetivo, variables dummies, partición 80/20 con semilla 42 y comparación de regresión lineal y árbol. Exporta la regresión lineal a `backend/models/modelo_consumo.joblib`, incluido en el repositorio. `predictor.py` carga ese archivo y prepara las variables para predecir. `features.py` y `evaluar.py` siguen vacíos.
+Matías implementó `entrenar.py`: lectura, exclusión ID/objetivo, dummies, partición 80/20 semilla 42 y comparación de regresión lineal/árbol. Exporta regresión lineal a `backend/models/modelo_consumo.joblib`; `predictor.py` la carga. `features.py` y `evaluar.py` siguen vacíos.
 
-El informe y el endpoint reportan MAE=131.28, RMSE=172.97 y R²=0.9939 para la regresión lineal; son valores incorporados por Matías, todavía no reproducidos en este entorno. La API tiene esas métricas escritas como constantes.
+Informe y API reportan MAE=131.28, RMSE=172.97 y R²=0.9939; no se reprodujeron aquí y la API los tiene como constantes. La página los identifica como reportados por API (errores en m³/mes).
 
-Pendientes de revisión: comparación de modelos en validación reservando test para el final; persistencia reproducible de métricas y preprocesamiento. El predictor multiplica la tasa de crecimiento poblacional por el escenario, aunque el esquema lo describe como multiplicador de demanda: acordar la semántica antes de diseñar los textos de la página.
+Pendiente con Matías: separar selección/validación de evaluación final, persistir preprocesamiento/métricas, probar referencia sencilla y evitar fuga. El esquema describe un multiplicador de demanda, pero el predictor multiplica la tasa poblacional: la página refleja el cálculo efectivo; falta alinear documentación del backend.
 
 ## Grafos e infraestructura
 
-`mst.py` lee los CSV y usa `networkx.minimum_spanning_tree`; `flujo.py` crea arcos en ambos sentidos por cañería, incorpora el supersumidero y usa `networkx.maximum_flow`. `diagnostico.py` calcula el flujo neto por arista y filtra usos de al menos 90 %. Los archivos `construir.py` y `union_find.py` siguen vacíos.
+`mst.py` usa `networkx.minimum_spanning_tree`. `flujo.py` crea arcos en ambos sentidos por cañería, agrega supersumidero y usa `networkx.maximum_flow`. `diagnostico.py` calcula flujo neto y filtra utilización >=90 %. `construir.py` y `union_find.py` siguen vacíos.
 
-Pendientes de revisión con Matías: algoritmos propios frente a llamadas de biblioteca según la consigna; `maximum_flow` no selecciona explícitamente Edmonds–Karp aunque el informe lo nombra; comprobar conservación, capacidades, demanda simultánea y desconexión con casos conocidos. No hay pruebas de esos módulos todavía.
+Pendiente con Matías: implementación propia exigida frente a llamadas de biblioteca, selección explícita del algoritmo de flujo (informe dice Edmonds–Karp) y tests de mínimo costo, conectividad, ciclos, capacidades, conservación, demanda simultánea y desconexión. Todavía no hay pruebas de estos módulos.
 
-Con costos fijos, cambiar la demanda modifica el flujo y el diagnóstico; no tiene por qué cambiar el MST. Un árbol de costo mínimo puede resultar insuficiente: mostrar ese resultado y su déficit.
+Con costos fijos, cambiar demanda no exige cambiar MST. Un árbol mínimo puede ser insuficiente: mostrar suministro/déficit cuando la API los entregue.
 
 ## API y contrato
 
-`backend/app/schemas.py` tiene `EscenarioRequest`, `NodoRed`, `TendidoMST`, `EstadoFlujo`, `MetricasML` y `SimulacionResponse`. El escenario es un multiplicador: 1.0, 1.1 y 1.3 corresponden a base, +10 % y +30 %.
+`POST /api/simular-red` recibe `escenario_crecimiento` (1.0, 1.1, 1.3). Devuelve `nodos`, `tendidos_mst`, `flujos`, `metricas_ml`. FastAPI: `https://infraestructura-red-api.onrender.com`.
 
-`main.py` registra FastAPI y el router de `routes_flujo.py`. Existe `POST /api/simular-red`, que acepta `escenario_crecimiento` y devuelve `SimulacionResponse`. El pipeline carga zonas, predice, convierte demanda a m³/día, calcula MST y flujo y filtra tramos con utilización >=90 %. `requirements.txt` contiene FastAPI, Uvicorn, Pandas, scikit-learn, NetworkX y Joblib sin versiones fijadas. En el intérprete inspeccionado esas dependencias siguen sin instalarse; no se importó la aplicación ni se cargó el modelo durante el merge.
+Verificación real: 16 barrios, 16 tendidos, dos flujos y demanda base sumada 2167.74 m³/día. Costo MST 73066.05 unidades. El navegador consultó +30 %, con demanda mostrada 2242.3 m³/día. Son observaciones del servicio, no pruebas matemáticas.
 
-Antes de integrar la página, acordar con Matías:
+**Pendientes de Matías; no se cambió backend en esta etapa:**
 
-- El endpoint actual no devuelve todas las aristas candidatas ni incluye `PLANTA` en la lista de nodos; ambas cosas son necesarias para el dibujo completo.
-- El pipeline calcula costo y caudal abastecido pero los descarta al armar la respuesta; agregar demanda y déficit, con unidades explícitas.
-- `flujos` contiene solo tramos con utilización >=90 %, todos marcados `saturada=True`; acordar devolver todos los tramos y diferenciar cercanía de saturación completa.
-- Validación de escenarios positivos y finitos, errores de API y mapeo entre nombres CSV y JSON.
-- Disponibilidad de métricas: no fabricar valores mientras el modelo no esté entrenado.
-
-Estas ampliaciones son propuestas; durante la integración se preservaron los esquemas y el backend de Matías. CORS actualmente permite cualquier origen con credenciales; revisar la configuración al definir los entornos.
+1. Planta con coordenadas, candidatos y todos los flujos. El cliente contempla opcionalmente `tendidos_candidatos` con estructura de un tendido.
+2. Suministro total, demanda y déficit con unidades; el pipeline calcula parte pero los descarta.
+3. Separar cercanía de saturación completa. Hoy el filtro >=90 % marca todos `saturada=True`.
+4. Validar escenarios positivos/finitos y errores; alinear semántica de crecimiento.
+5. Persistir métricas verificables y fijar dependencias compatibles con modelo.
+6. Ajustar CORS al origen definitivo de Vercel. Hoy permite cualquier origen con credenciales; preflight local respondió correctamente.
 
 ## Pruebas y verificación
 
-Última ejecución disponible: `python -m unittest discover -s backend/tests -v` → **1 test aprobado**, de `test_datos.py`. Verifica generación repetible, esquema básico, costos/capacidades positivos y conexión de todos los barrios con la planta. No demuestra que funcionen ML, MST, flujo, API o frontend.
+**Frontend, 08/11/2026:**
 
-En la integración se ejecutó la prueba existente de datos y se comprobó la sintaxis de los módulos Python con `ast.parse`, sin importar dependencias. No se validó la API, el modelo serializado ni los algoritmos en ejecución por falta de sus dependencias. Tampoco hay tests de esas partes en el repositorio: los archivos previstos siguen vacíos.
+- `npm.cmd test`: **22 pruebas aprobadas**, tres archivos.
+- `npm.cmd run lint`: aprobado.
+- `npm.cmd run build`: aprobado; incluye `tsc --noEmit` y Vite. JavaScript ~255 kB / 79 kB gzip.
+- Se repitieron las 22 pruebas, lint y build tras quitar indicadores de conexión/hora y aclarar el selector: todo aprobado. Las capturas conservan la primera versión visual, anterior a esos ajustes de texto/cabecera.
+- Contrato: números inválidos, duplicados, referencias inexistentes, flujo imposible, campos ausentes; diferencia dato ausente/cero/cercanía/saturación/capacidad cero. Geometría obsoleta no se mezcla con otra red.
+- Cliente: request esperado, HTTP fallido, JSON incompatible y timeout.
+- Interfaz: búsqueda/restablecer, teclado, escenario, respuestas desordenadas, error/reintento conservando resultado identificado y red vacía sin nodos de ejemplo.
+- Edge con API real: escenarios base/+30 %, vistas de tendidos/capacidad, 17 nodos y 26 candidatos. A 390 px la página no desborda y el gráfico mantiene scroll interno. Capturas en `capturas/`.
+- Perfiles temporales `.preview/` excluidos del watcher para evitar EBUSY de Edge; no se versionan.
+- Se exceptuó `frontend/src/lib/` del ignore genérico de Python para que los helpers de presentación se incluyan al compartir/clonar el proyecto.
+- Windows bloqueó esbuild en aislamiento: pruebas/build se ejecutaron con permiso y pasaron.
 
-La documentación de esta entrega se revisó con `git diff --check` y comprobación de enlaces locales. La página todavía no permite ejecutar tests, lint, TypeScript ni build porque sus archivos de configuración están vacíos.
+**Backend:** última ejecución conocida de `test_datos.py`: un test aprobado de repetibilidad, esquema, costos/capacidades positivos y conexión de barrios con planta. No prueba ML, MST, flujo ni pipeline. No se instalaron sus dependencias ni arrancó Python localmente en esta etapa; sí se comprobó el servicio desde navegador.
 
-Pruebas importantes pendientes:
+En la revisión documental del PDF se repitió `test_datos.py`: aprobado. Se comprobaron conteos/columnas de los CSV y la fórmula de las 600 etiquetas (crecimiento a cinco años con ruido ±5 %). No se repitieron tests del frontend porque no cambió código en esta revisión.
 
-- MST: costo mínimo conocido, conectividad, ausencia de ciclos y grafo desconectado; aceptar distintas soluciones óptimas ante empates.
-- Flujo: respuesta conocida, capacidades, conservación, demanda simultánea y déficit.
-- Integración: cambiar predicciones o escenario debe afectar correctamente la demanda y el diagnóstico; comprobar unidades.
-- ML: evitar fuga del objetivo y del test, evaluar contra una referencia sencilla.
-- Página: escenario enviado correctamente, resultados coherentes, errores, reintento y respuestas fuera de orden; accesibilidad y uso en pantallas pequeñas.
+**Pendiente:** casos conocidos MST/flujo e integración de demanda simultánea, unidades y déficit; validar ML contra referencia y reservar test final. No presentar los 22 tests de interfaz como validación de algoritmos.
 
-Caso conocido útil: PLANTA–A con capacidad 70 m³/día, A–B con 35; demandas A=20 y B=30. Base: suministro 50 y déficit 0. Con +30 %: demanda 65, suministro 61 y déficit 4 en B.
+Caso útil: PLANTA–A capacidad 70, A–B capacidad 35; demandas A=20, B=30 m³/día. Base suministro 50/déficit 0. Al multiplicar directamente demandas por 1.3: demanda 65, suministro 61 y déficit 4 en B. No es la semántica del multiplicador de tasa del predictor actual.
 
 ## Informe y documentación
 
-`Informe.md` reemplazó al PDF vacío. Matías agregó métricas y ejemplos de ejecución junto con el backend. Todavía presenta el frontend como realizado aunque está vacío, deja pendientes los nombres de algoritmos y contiene marcas de citas sin resolver (`[cite: ...]`). Revisar también las afirmaciones sobre Edmonds–Karp y el método de selección del modelo antes de entregar.
+Los cambios de documentación están preparados pero todavía pendientes del commit documental: `Informe.md` refleja llamadas reales y límites de ML/grafos, conserva las métricas reportadas por Matías, completa limitaciones y sustituye citas sin resolver por referencias a la consigna. Algoritmos, selección de modelos y análisis de errores siguen pendientes de cierre técnico.
 
-El README explica generación y prueba de datos. Matías ya agregó el backend pero falta documentar instalación, versiones y arranque desde la raíz. Mantenerlo actualizado al implementar cada etapa.
+La sección de IA ya incluye herramientas, tareas, ejemplos de instrucciones resumidas, responsabilidades, reflexión y corrección del indicador live. Ciro aclaró que usó paletasdecolores.com.ar y exploró diseños de temática parecida en Figma, sin afirmar prototipado completo o funciones de IA. De su proyecto anterior se documentan solo patrones presentes aquí: TypeScript, componentes/utilidades/tests, separación UI/cliente/backend, mocks y documentación de contexto/continuidad. No se inspeccionó ese proyecto ni se identificaron copias literales; no se atribuye su código a IA. Por pedido expreso de Ciro, registrar únicamente aportes que existan o estén planificados en este proyecto. El indicador live queda como único desacierto visual señalado por Ciro hasta esta revisión; su comentario sobre la IA se registra como observación del integrante. Queda completar el registro de Matías si hubo otras intervenciones.
+
+README raíz y `frontend/README.md`: arranque/pruebas. El plan conserva alternativas y señala implementación y pendientes de API.
 
 ## Hosting y despliegue
 
-El usuario eligió **Vercel para la página y Render para FastAPI** el 2026-11-07. `despliegue.md` contiene la comparación y los pasos de configuración. El 2026-11-08 compartió el log de un intento de despliegue hecho desde Render: el servicio pudo clonar el repositorio y seleccionar `49707da`, por lo que el push de la integración ya está confirmado por ese log. Tras un primer fallo por la ruta de requirements, el usuario informó build exitoso y compartió `https://infraestructura-red-api.onrender.com`. Se comprobaron por HTTP la documentación, el contrato OpenAPI y una simulación base: los tres respondieron 200. No se conoce el plan elegido.
+API desplegada por el usuario en Render. El fallo de requirements se corrigió usando raíz completa y build `pip install -r backend/requirements.txt`. Arranque `uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`; log con `PYTHON_VERSION=3.12.10`. Docs, OpenAPI y simulaciones respondieron 200. No se conoce el plan contratado.
 
-Vercel también soporta FastAPI: no asumir que exige una Lambda externa ni que Python lo hace inviable. Antes de optar por funciones, medir el paquete con las dependencias científicas y comprobar la lectura del modelo/CSV. Para Render gratuito, contemplar suspensión tras inactividad y demora al reiniciar. Un VPS autoadministrado requiere administrar el servidor; Lambda agrega empaquetado, permisos y exposición HTTP.
-
-La página se desarrollará con dirección de API configurable. La elección de hosting no exige cambiar el stack aprobado. Quedan pendientes probar dependencias/versiones y memoria del backend, configurar rutas/entornos y CORS, y validar el recorrido completo por HTTPS. El modelo se entrena antes de publicar, no por petición.
-
-Configuración prevista: Render desde la raíz completa, build `pip install -r backend/requirements.txt`, arranque `uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT` y Python 3.12.10 como base local conocida. Vercel desde `frontend/`, build `npm run build`, salida `dist` y dirección de API en `VITE_API_URL` cuando se implemente el cliente. La versión de Python por sí sola no garantiza compatibilidad con el modelo: fijar las bibliotecas del entrenamiento.
-
-El problema anterior de acceso al repositorio dejó de bloquear el deploy: Render ya lo clonó. El frontend todavía está vacío y no puede desplegarse hasta implementar y probar su build.
-
-Fallo anterior resuelto: Render ejecutaba `pip install -r requirements.txt` desde la raíz, aunque el archivo está en `backend/requirements.txt`. Se indicó corregir el Build Command y el siguiente despliegue ya responde. El log inicial confirmó Python 3.12.10. El 2026-11-08 se verificaron `GET /docs`, `GET /openapi.json` y `POST /api/simular-red` con `escenario_crecimiento=1.0`: HTTP 200, 16 barrios, 16 tendidos MST, 2 tramos de flujo reportados y demanda diaria sumada de 2167.74 m³/día. Estos resultados verifican el recorrido HTTP y la carga del modelo; no demuestran la corrección matemática de predicciones, métricas o algoritmos.
+Frontend compilado localmente, **sin publicación en Vercel**. `VITE_API_URL` configurable, sin secretos. Modelo entrenado antes del deploy, nunca por petición. Faltan CORS definitivo, HTTPS desde página publicada y carga tras inactividad. No hace falta Lambda ni VPS para esta arquitectura. Ver `despliegue.md`.
 
 ## Entorno y comandos conocidos
 
-- Python probado: 3.12.10.
-- Node inspeccionado: 24.20.0; npm: 11.19.0.
-- En PowerShell, `npm.ps1` queda bloqueado por la política de scripts; `npm.cmd` funciona sin cambiar esa política.
-- Generar datos: `python backend/app/data/generar_dataset.py`.
-- Prueba actual: `python -m unittest discover -s backend/tests -v`.
-- El backend ahora tiene requisitos declarados, pero no se instalaron en esta sesión. El arranque previsto desde la raíz es `python -m uvicorn backend.app.main:app --reload`; todavía no se verificó aquí.
-- No hay scripts ni configuración de entorno de frontend. Render ya tiene un servicio configurado y `PYTHON_VERSION=3.12.10`; arranque y simulación base públicos verificados por HTTP. El cliente de la página deberá usar `https://infraestructura-red-api.onrender.com` como dirección configurable.
+- Python conocido 3.12.10. Backend desde raíz: `python -m uvicorn backend.app.main:app --reload` (no ejecutado localmente en esta etapa).
+- Datos: `python backend/app/data/generar_dataset.py`. Prueba: `python -m unittest discover -s backend/tests -v`.
+- Node 24.20.0, npm 11.19.0. PowerShell: `npm.cmd` sin cambiar política.
+- Frontend: `cd frontend`, `npm.cmd ci`, `npm.cmd run dev`; `http://127.0.0.1:5173`.
+- React 19.3.1, Vite 7.3.7, TypeScript 5.9.3, Vitest 4.1.12, ESLint 10.14.0, TypeScript-ESLint 8.72.1. Lockfile versionado.
+- Overrides limitados a minimatch de herramientas lint: 11.0.5 para GHSA-g3hv-75wg-m249. Árbol/lint comprobados; instalación final reportó cero vulnerabilidades conocidas.
+- Se detiene el servidor local de QA al cerrar esta etapa; iniciar `npm.cmd run dev` para revisar.
 
 ## Próxima secuencia
 
-1. Acordar los campos/semántica pendientes del contrato con Matías; la API base ya está disponible para integrar.
-2. Usuario: frontend con datos de ejemplo explícitos y pruebas de comportamiento.
-3. Matías: pruebas del backend agregado y ajustes de contrato, validación y algoritmos necesarios.
-4. Integración con API real, escenarios completos, informe y ejecución reproducible.
+1. Matías: implementación de algoritmos y tests matemáticos, evaluación reproducible de ML y contrato completo (planta, candidatos, todos los flujos, suministro/déficit).
+2. Página: integrar campos nuevos, mostrar todos los caudales y cobertura; probar un escenario que cambie el diagnóstico, sin geometría local cuando la API la provea.
+3. Ambos: cerrar informe, uso de IA adicional de Matías si lo hubo, resultados reproducidos, capturas finales y defensa. Referencias de diseño y patrones previos de Ciro ya aclaradas.
+4. Verificar instalación/demo completa en otro entorno; registrar código en Git cuando se solicite. Publicar en Vercel conforme a la decisión del grupo y comprobar CORS/HTTPS/despertar de Render.
