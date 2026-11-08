@@ -7,7 +7,6 @@ warnings.filterwarnings("ignore")
 modelo = joblib.load(RUTA_MODELO)
 
 def predecir_demanda(df_zonas, multiplicador_escenario):
-    """Aplica el escenario, prepara los datos y devuelve las predicciones."""
     df_sim = df_zonas.copy()
     df_sim['crecimiento_poblacional_estimado'] *= multiplicador_escenario
     

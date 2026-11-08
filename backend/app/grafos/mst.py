@@ -1,33 +1,37 @@
 import networkx as nx
 import pandas as pd
+from backend.app.grafos.union_find import UnionFind
 
 def calcular_red_menor_costo(ruta_aristas_csv):
-    """
-    Lee las aristas candidatas y calcula el MST usando Kruskal.
-    Retorna el grafo resultante y el costo total.
-    """
     df_aristas = pd.read_csv(ruta_aristas_csv)
     
-    G_base = nx.from_pandas_edgelist(
-        df_aristas, 
-        source='origen', 
-        target='destino', 
-        edge_attr=['costo_unidades', 'capacidad_m3_dia']
-    )
+    # 1. Obtener todos los nodos únicos
+    nodos = set(df_aristas['origen']).union(set(df_aristas['destino']))
+    uf = UnionFind(nodos)
     
-    mst = nx.minimum_spanning_tree(G_base, weight='costo_unidades')
+    # 2. Ordenar aristas por peso (costo) para Kruskal
+    aristas_ordenadas = df_aristas.sort_values('costo_unidades')
     
-    costo_total = sum(datos['costo_unidades'] for u, v, datos in mst.edges(data=True))
+    # Vamos a guardar el resultado en un objeto de NetworkX SOLO para mantener 
+    # la compatibilidad con el resto del pipeline, pero la lógica fue manual.
+    mst_manual = nx.Graph()
+    costo_manual = 0
     
-    return mst, costo_total
-
-if __name__ == "__main__":
-    ruta = 'backend/data/raw/aristas_candidatas.csv' 
+    # 3. Lógica de Kruskal desde cero
+    for _, fila in aristas_ordenadas.iterrows():
+        u, v = fila['origen'], fila['destino']
+        costo, cap = fila['costo_unidades'], fila['capacidad_m3_dia']
+        
+        if uf.union(u, v):
+            mst_manual.add_edge(u, v, costo_unidades=costo, capacidad_m3_dia=cap)
+            costo_manual += costo
+            
+    # --- VALIDACIÓN CON NETWORKX ---
+    G_base = nx.from_pandas_edgelist(df_aristas, source='origen', target='destino', edge_attr=['costo_unidades', 'capacidad_m3_dia'])
+    mst_nx = nx.minimum_spanning_tree(G_base, weight='costo_unidades')
+    costo_nx = sum(datos['costo_unidades'] for _, _, datos in mst_nx.edges(data=True))
     
-    try:
-        red_optima, costo = calcular_red_menor_costo(ruta)
-        print("--- Resultado de Kruskal ---")
-        print(f"Cantidad de conexiones seleccionadas: {red_optima.number_of_edges()}")
-        print(f"Costo total de la obra: {costo:.2f}")
-    except FileNotFoundError:
-        print(f"No se encontró el archivo en {ruta}.")
+    print(f"[Validación Kruskal] Manual: {costo_manual:.2f} | NetworkX: {costo_nx:.2f}")
+    assert abs(costo_manual - costo_nx) < 0.1, "¡Diferencia en Kruskal!"
+    
+    return mst_manual, costo_manual
