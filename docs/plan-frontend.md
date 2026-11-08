@@ -1,6 +1,14 @@
 # Propuesta de página y arquitectura inicial
 
-Fecha: 2026-11-07. Estado: **base aprobada para comenzar después del push de documentación a cargo del usuario**. La aplicación todavía no está implementada; los detalles de la API deben coordinarse con Matías.
+Fecha inicial: 2026-11-07. Actualización: 2026-11-08. Estado: **primera implementación local terminada e integrada con Render**. Pasaron 22 pruebas, lint, TypeScript y build. La publicación en Vercel y completar suministro/déficit en la API siguen pendientes. Este documento conserva la arquitectura y el alcance objetivo; el estado comprobado está en `context.md`.
+
+### Implementación actual frente al plan
+
+Se implementaron las dos vistas, selección SVG/tabla, escenarios, búsqueda, estados de carga/error/reintento y paleta. Se usa API real desde el inicio: el modo demostración propuesto no fue necesario; los fixtures solo se usan en tests. La API solo devuelve flujos críticos: los demás se presentan como **Sin dato**, sin inventar déficit o suministro. Los escenarios multiplican la tasa de crecimiento poblacional, como el predictor actual.
+
+La revisión del PDF identificó un pendiente adicional de interfaz: el gráfico etiqueta porcentajes solo en críticos; falta representar el caudal de cada arista cuando la API entregue todos los flujos, e incorporar cobertura/suministro/déficit. Ver `revision-consigna.md`. La sección de IA y diseño del informe ya registra el generador de paletas, uso exploratorio de Figma y patrones del proyecto previo de Ciro que tienen correspondencia con el alcance actual.
+
+Temporalmente se complementan planta y candidatos con geometría/costos/capacidades de los CSV versionados (`casoRed.json`), tras comprobar coincidencia con los barrios y MST recibidos. No se generan predicciones ni algoritmos en navegador. Ante otra red se descarta ese complemento. El cliente prioriza candidatos enviados por API cuando estén disponibles. Sincronización y ejecución: `../frontend/README.md`.
 
 ## 1. Objetivo y usuarios
 
@@ -29,6 +37,8 @@ Un único panel con dos vistas: **Tendidos** y **Capacidad**. El encabezado iden
 - El grafo tiene leyenda y selección de un nodo/arista con detalle. La tabla ofrece acceso equivalente a la información. Los estados usan texto además de color.
 
 Dirección visual: panel técnico claro, con la paleta compartida por el usuario el 2026-11-08. La prioridad es la lectura del grafo, las cifras y el diagnóstico. Los códigos de efectos decorativos quedan para después, según indicó el usuario.
+
+Revisión del usuario: evitar distintivos tipo «en vivo» y estados técnicos de API en la cabecera. Se quitaron ese indicador y la hora de respuesta; la carga se comunica con texto sencillo junto al escenario y los fallos con reintento.
 
 | Color | Papel previsto |
 | --- | --- |
@@ -94,7 +104,7 @@ Para estilos, CSS propio es suficiente para estas dos vistas y evita incorporar 
 | Vitest + Testing Library + entorno DOM | Pruebas de escenarios, interacción y errores visibles | Pruebas solo de funciones con Node cubren menos interacción; se recomiendan herramientas de componentes |
 | ESLint y configuración TypeScript/React mínima | Detectar problemas estáticos de código | Revisión manual; agregar configuración pequeña y útil |
 
-Todas están propuestas, no instaladas. Antes de fijar versiones, verificar compatibilidad con el entorno y guardar el lockfile. La base también necesita los tipos de React. No se propone un servicio externo para testing.
+Estas herramientas ya están instaladas y se guardó `package-lock.json`; se verificaron Node 24.20.0, React 19.3.1, Vite 7.3.7, TypeScript 5.9.3, Vitest 4.1.12 y ESLint 10.14.0. Se incluyeron tipos de React y DOM de pruebas, sin servicio externo de testing. Los overrides transitivos de minimatch para lint y su motivo se documentan en `../frontend/README.md`.
 
 Comprobaciones para cerrar una etapa de frontend: tests relevantes, lint, TypeScript y build. Una prueba de navegador del recorrido principal se agrega cuando exista una integración comprobable y un entorno de navegador disponible.
 
@@ -109,7 +119,7 @@ Comprobaciones para cerrar una etapa de frontend: tests relevantes, lint, TypeSc
 
 Validar el escenario en servidor; el navegador no determina totales ni capacidades. Mostrar textos como contenido, no interpretar HTML devuelto por la API. No exponer secretos en configuración del frontend. La dirección de la API es configuración pública; CORS se configura en FastAPI para el origen de la página.
 
-Local: desarrollo con API local o demostración explícita. El usuario eligió Vercel para el frontend y Render para FastAPI; la configuración y las alternativas evaluadas están en [despliegue.md](despliegue.md). La API ya responde en `https://infraestructura-red-api.onrender.com`; se verificaron documentación y simulación base el 2026-11-08. El frontend y su publicación siguen pendientes. El cliente consumirá una dirección configurable propuesta como `VITE_API_URL`. No se necesitan pagos, email, uploads ni autenticación para el MVP.
+Local: desarrollo con API real de Render o dirección local configurable. El usuario eligió Vercel para frontend y Render para FastAPI; ver [despliegue.md](despliegue.md). La página ya consulta `https://infraestructura-red-api.onrender.com` y usa `VITE_API_URL`; se verificaron escenarios reales en navegador el 2026-11-08. Solo su publicación sigue pendiente. No se necesitan pagos, email, uploads ni autenticación para el MVP.
 
 Usar HTML semántico, labels, controles por teclado, foco visible y contraste suficiente. Ofrecer tabla y leyenda como complemento del SVG y mensajes de carga/error comprensibles para tecnologías de asistencia.
 
@@ -126,8 +136,9 @@ frontend/
     main.tsx, App.tsx                 # Entrada y coordinación del panel
     types/red.ts                     # Contrato TypeScript acordado
     api/cliente.ts                   # Solicitudes y validación de respuesta
-    api/demo.ts                      # Nuevo: proveedor explícito de ejemplo
-    data/demo.json                   # Nuevo: fixture con procedencia documentada
+    api/validar.ts                   # Validación del contrato recibido
+    data/casoRed.json                # Geometría de CSV, sin predicciones
+    lib/red.ts                       # Adaptación y formatos para presentar
     hooks/useSimulacion.ts            # Nuevo: estado de carga y concurrencia
     components/                      # MapaRed, SelectorEscenario, PanelDiagnostico,
                                      # TablaAristas y Leyenda ya previstos
@@ -136,7 +147,7 @@ frontend/
     tests/                           # Nuevas pruebas del comportamiento importante
 ```
 
-Agregar configuración mínima de pruebas/lint y ejemplo de configuración de API al necesitarlos. Actualizar README, contexto e informe en cada etapa. Los cambios de `schemas.py` y routers deben coordinarse con Matías; este plan no los modifica.
+Se agregaron configuración de pruebas/lint, lockfile y `.env.example`. Los fixtures están en `src/tests/fixtures/`; no hay proveedor demo de producción porque Render ya estaba disponible. Actualizar README, contexto e informe en cada etapa. Los cambios de `schemas.py` y routers deben coordinarse con Matías; esta implementación no los modifica.
 
 ## 11. Riesgos y pruebas con resultados comprobables
 

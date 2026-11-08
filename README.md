@@ -3,11 +3,25 @@
 ## Contexto y planificación
 
 - [Contexto actualizado del proyecto](docs/context.md): estado real de página, datos, ML, grafos, API y pruebas; debe revisarse y actualizarse ante cambios importantes, commits y push.
-- [Plan de arquitectura del frontend](docs/plan-frontend.md): alcance inicial aprobado, flujos, contrato propuesto, alternativas y etapas; implementación pendiente.
+- [Plan de arquitectura del frontend](docs/plan-frontend.md): alcance aprobado, flujos, contrato, decisiones y estado de implementación.
+- [Guía de la página](frontend/README.md): instalación, ejecución, estructura, pruebas y límites de la API.
+- [Revisión de la consigna](docs/revision-consigna.md): requisitos del PDF, evidencia actual y pendientes de frontend, backend e informe.
 - [Guía de despliegue](docs/despliegue.md): Vercel para la página y Render para la API, configuración prevista y pasos pendientes antes de publicar.
 - [Instrucciones para agentes de código](AGENTS.md): lectura del contexto, mantenimiento de documentación y criterios de trabajo y pruebas.
 
-API de prueba desplegada en Render: [documentación interactiva](https://infraestructura-red-api.onrender.com/docs). El 08/11/2026 se verificó que la documentación y una simulación base responden con HTTP 200. El frontend sigue pendiente y las pruebas matemáticas del backend todavía deben completarse.
+API desplegada en Render: [documentación interactiva](https://infraestructura-red-api.onrender.com/docs). La página local ya consume esa API, con vistas Tendidos y Capacidad y escenarios de crecimiento. El 08/11/2026 se verificó el recorrido real desde el navegador. Las pruebas matemáticas del backend y los campos completos de suministro/déficit todavía deben completarse con Matías.
+
+## Probar la página
+
+Con Node 22.12 o posterior (probado con 24.20.0), desde la raíz:
+
+```powershell
+cd frontend
+npm.cmd ci
+npm.cmd run dev
+```
+
+Abrir `http://127.0.0.1:5173`. Usa Render sin tener que ejecutar Python localmente. La primera respuesta puede demorarse después de inactividad. Para verificar: `npm.cmd test`, `npm.cmd run lint` y `npm.cmd run build` (incluye TypeScript). Hay 22 pruebas relevantes del frontend aprobadas; no sustituyen los tests del backend. La publicación del frontend en Vercel es el siguiente paso después de revisar la interfaz.
 
 ## Primer paso: generar los datos del caso sintético
 
@@ -19,7 +33,7 @@ python backend/app/data/generar_dataset.py
 
 El comando genera en `backend/data/raw/` cuatro CSV: `planta.csv`, `zonas.csv`, `historial_consumo.csv` y `aristas_candidatas.csv`. Usa una semilla fija (`42`) para que el resultado sea reproducible. Se pueden cambiar la semilla y el tamaño del historial con `--semilla` y `--muestras`. Las reglas y unidades están documentadas en [Informe.md](Informe.md).
 
-Matías incorporó el entrenamiento, un modelo exportado, cálculos de MST y flujo mediante NetworkX y el endpoint `POST /api/simular-red`. La página sigue pendiente; antes de integrarla faltan pruebas del backend y completar los datos de la respuesta. El estado detallado y las limitaciones verificadas están en [docs/context.md](docs/context.md).
+Matías incorporó el entrenamiento, un modelo exportado, cálculos de MST y flujo mediante NetworkX y el endpoint `POST /api/simular-red`. La página está integrada con esa respuesta; identifica explícitamente los flujos ausentes y complementa la geometría candidata con los CSV versionados, sin inventar resultados. Faltan pruebas del backend y completar el contrato. El estado y las limitaciones verificadas están en [docs/context.md](docs/context.md).
 
 Para comprobar la reproducibilidad y conectividad del grafo generado:
 
@@ -156,13 +170,14 @@ Interfaz de usuario para visualizar los grafos, interactuar con los escenarios d
 
 * **`src/`** (Código Fuente):
   * **`main.tsx` & `App.tsx`**: Punto de entrada de la aplicación React y componente raíz que orquesta las vistas.
-  * **`api/cliente.ts`**: Lógica de conexión con el backend (funciones `fetch` o Axios para consumir la API de FastAPI).
+  * **`api/cliente.ts` y `api/validar.ts`**: Conexión mediante `fetch`, cancelación y validación del JSON recibido.
+  * **`lib/red.ts` y `data/casoRed.json`**: Adaptación para presentar resultados y geometría del caso CSV; no calculan predicciones, MST ni flujo.
   * **`types/red.ts`**: Definición de tipos o interfaces de TypeScript (Nodo, Arista, Diagnostico, Escenario) para asegurar el tipado estricto de los datos.
 
 * **`src/components/`** (Componentes Reutilizables):
-  * **`MapaRed.tsx`**: Componente visual (basado en SVG o alguna librería de mapas/grafos) que renderiza los nodos y las conexiones.
+  * **`MapaRed.tsx`**: Gráfico SVG con selección de nodos y conexiones por mouse o teclado.
   * **`SelectorEscenario.tsx`**: Control de UI para cambiar las simulaciones de demanda (+0%, +10%, +30%, etc.).
-  * **`PanelDiagnostico.tsx`**: Tarjeta de resumen con KPIs importantes (costo total, flujo actual, cantidad de aristas saturadas).
+  * **`PanelDiagnostico.tsx`**: Resumen de demanda proyectada, costo, barrios y tramos críticos informados.
   * **`TablaAristas.tsx`**: Tabla de datos con el detalle minucioso del flujo y la capacidad por cada tramo de la red.
   * **`Leyenda.tsx`**: Explicación visual de los colores y formas utilizados en el mapa.
 
@@ -170,4 +185,5 @@ Interfaz de usuario para visualizar los grafos, interactuar con los escenarios d
   * **`VistaTendidos.tsx`**: Pantalla enfocada en mostrar todas las conexiones candidatas y resaltar la red óptima calculada (MST).
   * **`VistaFlujo.tsx`**: Pantalla enfocada en el análisis operativo, mostrando el flujo por arista y destacando en rojo las líneas saturadas.
 
-* **`src/styles/`**: Carpeta reservada para hojas de estilo (CSS, SCSS o módulos).
+* **`src/styles/global.css`**: Paleta, estados y diseño adaptable con CSS propio.
+* **`src/tests/`**: Pruebas del contrato, cliente y comportamiento de la página. Los fixtures no son un modo demostración de producción.

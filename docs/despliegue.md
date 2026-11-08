@@ -28,7 +28,7 @@ No se fijan precios en este documento: antes de contratar se deben confirmar pla
 
 1. Ejecutar el backend con sus dependencias y reproducir las predicciones; fijar versiones compatibles con el modelo exportado.
 2. Resolver los campos de API faltantes y verificar casos conocidos de MST, flujo y escenarios.
-3. Construir la página y superar tests, lint, TypeScript y build.
+3. Página construida localmente: 22 tests, lint, TypeScript y build aprobados el 08/11/2026. Revisarla antes de publicar.
 4. Revisar los imports y rutas de CSV/modelo para el directorio de ejecución elegido; incluir esos archivos en el paquete publicado.
 5. Configurar dirección de API pública en el frontend y restringir CORS al origen esperado. No incorporar secretos al bundle del navegador.
 6. Probar HTTPS, carga inicial de modelo, respuesta después de inactividad, errores, límites de memoria y una simulación completa desde otra máquina.
@@ -37,11 +37,11 @@ Los CSV y el modelo versionados pueden formar parte del despliegue como archivos
 
 ## Esbozo para Vercel + Render
 
-- Vercel: seleccionar `frontend/` como raíz, compilar con el script de build y servir `dist/`, una vez implementado el frontend.
+- Vercel: seleccionar `frontend/` como raíz, compilar con `npm run build` y servir `dist/`. El build local ya funciona; se probó Node 24.20.0.
 - Render: conservar la raíz del repositorio para que coincida con los imports y rutas actuales; instalación prevista `pip install -r backend/requirements.txt` y arranque previsto `uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`.
 - El navegador obtiene la página de Vercel y solicita las simulaciones a la API de Render. Los cálculos permanecen en Python.
 
-El backend ya respondió a una simulación base en Render; la configuración del frontend en Vercel sigue pendiente de implementación y verificación. La dirección de API debe mantenerse configurable en la página.
+El backend ya respondió desde la página local a los escenarios base y +30 %. La configuración/publicación del frontend en Vercel sigue pendiente. La dirección de API es configurable con `VITE_API_URL` y requiere recompilar al cambiarla.
 
 ## Pasos para arrancar
 
@@ -61,8 +61,8 @@ El backend ya respondió a una simulación base en Render; la configuración del
 La raíz debe quedar en el repositorio completo por los imports `backend.app` y las rutas `backend/data/...`. Un directorio raíz `backend/` exigiría adaptar esos imports y rutas. El plan gratuito puede servir para una demo si alcanza la memoria; confirmar las limitaciones antes de elegirlo. No se autorizó contratar un plan pago.
 
 4. Cuando el backend se haya publicado, abrir `https://<servicio>.onrender.com/docs` y ejecutar `POST /api/simular-red` con `{"escenario_crecimiento": 1.0}`. Revisar logs si falla la instalación, el arranque o la carga del modelo. Una respuesta correcta comprueba el recorrido HTTP, pero no reemplaza los tests matemáticos.
-5. Implementar y verificar el frontend. **Hoy `frontend/package.json` y el código están vacíos: todavía no puede compilarse ni desplegarse en Vercel.**
-6. Cuando exista el build, importar el mismo repositorio en Vercel con raíz `frontend`, preset Vite, comando `npm run build` y salida `dist`. La variable pública propuesta es `VITE_API_URL=https://<servicio>.onrender.com`, que el cliente de API deberá consumir. Configurar CORS en FastAPI con el origen real de Vercel.
+5. Revisar el frontend local siguiendo `frontend/README.md`. **Ya está implementado y su build funciona; todavía no se publicó.** El contrato parcial se identifica en pantalla y no impide revisar la interfaz.
+6. Importar el mismo repositorio en Vercel con raíz `frontend`, preset Vite, Node 24.x, comando `npm run build` y salida `dist`. Usar `VITE_API_URL=https://infraestructura-red-api.onrender.com`, sin `/api` al final. El cliente ya consume esta variable. Configurar CORS en FastAPI con el origen real de Vercel. Vercel usa el JSON geométrico versionado y no necesita ejecutar Python.
 7. Probar una simulación desde la página publicada, incluida la primera solicitud después de un periodo de inactividad. Guardar URLs reales y resultados verificados en el contexto; no dar por publicado un servicio solo por haberlo configurado.
 
 ## Referencias oficiales consultadas

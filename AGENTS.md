@@ -33,4 +33,4 @@ Estas instrucciones aplican a todo el repositorio.
 
 - Hacer commits pequeños por cambios relacionados cuando el usuario los solicite. La obligación de actualizar contexto no autoriza por sí sola commits ni push.
 - No hacer force push, resets destructivos, merges importantes ni borrado de datos sin la autorización correspondiente.
-- La etapa actual es planificación dentro del repositorio. Antes de publicar o agregar hosting, seguir la decisión de entorno y el alcance aprobado por el usuario.
+- Consultar la etapa vigente en `docs/context.md`. La página local está implementada y la API está en Render; antes de publicar el frontend, seguir la decisión Vercel + Render y el alcance aprobado por el usuario.

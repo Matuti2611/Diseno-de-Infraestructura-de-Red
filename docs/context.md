@@ -8,7 +8,7 @@
 
 Trabajo integrador de ML, grafos y desarrollo web para una cooperativa de agua. Proyectar el consumo a cinco años, calcular tendidos de menor costo y comprobar si permiten abastecer la demanda. La consigna indica entrega el 08/11/2026. No se trata de una red de módems.
 
-El 08/11 se releyó el PDF completo: consignas generales pp. 1–4 y TP elegido pp. 7–8. La matriz de cumplimiento está preparada para el siguiente commit documental. El proyecto no se declara completo: además del backend hay pendientes de visualización de todos los caudales, diagnóstico, documentación y entrega. El enunciado exige demo e instrucciones reproducibles; no obliga a publicar en Vercel ni contratar hosting.
+El 08/11 se releyó el PDF completo: consignas generales pp. 1–4 y TP elegido pp. 7–8. Matriz de cumplimiento en `revision-consigna.md`. El proyecto no se declara completo: además del backend hay pendientes de visualización de todos los caudales, diagnóstico, documentación y entrega. El enunciado exige demo e instrucciones reproducibles; no obliga a publicar en Vercel ni contratar hosting.
 
 Recorrido: datos → regresión → demanda por nodo → Kruskal o Prim → Ford–Fulkerson o Edmonds–Karp → API → frontend.
 
@@ -20,13 +20,15 @@ Recorrido: datos → regresión → demanda por nodo → Kruskal o Prim → Ford
 - El usuario pide tests que detecten errores relevantes, no pruebas agregadas únicamente para que pasen.
 - Se aprobó React + TypeScript estricto + Vite, CSS propio y SVG, con vistas Tendidos y Capacidad, escenarios y tabla. El 08/11 autorizó continuar la página; esta etapa ya está implementada localmente. No volver a pedir aprobación por el mismo alcance.
 - Hosting elegido: Vercel para frontend y Render para FastAPI. Efectos decorativos pospuestos. Sin autenticación, base de datos ni servicios nuevos.
-- El usuario autorizó agrupar lo existente en commits y luego continuar con los pendientes del frontend. El primer grupo incorpora página, configuración, pruebas y capturas; el siguiente reúne informe y revisión de consigna. El usuario realiza los push; no se autorizó publicar servicios.
+- El usuario autorizó agrupar los cambios existentes en commits y continuar con los pendientes del frontend. Se creó y comprobó el commit de implementación de la página, configuración y 22 pruebas; este grupo documental incorpora informe, revisión de consigna y guías actualizadas. El usuario realiza los push; no se autorizó publicar servicios.
 
 ## Estado del repositorio
 
 La integración autorizada con Matías quedó en `49707da`, conservando ambos historiales y sin conflictos. El log compartido de Render confirma que ese commit fue publicado. Después se crearon `9031a6e` (despliegue) y `7692bbb` (paleta). Al iniciar esta etapa la rama estaba limpia, `main` dos commits por delante de la referencia local `origin/main`. No se consultó el remoto de nuevo durante esta implementación.
 
-Esta etapa implementa `frontend/` y actualiza documentación y `.gitignore`; no modifica código, datos ni modelo del backend. Se prepara el commit de implementación con 22 pruebas, lint y build ya aprobados; los cambios de informe, README raíz, plan, despliegue y revisión de consigna se conservan en el árbol de trabajo para el siguiente commit. No se publicó el frontend.
+Esta etapa implementa `frontend/` y actualiza documentación y `.gitignore`; no modifica código, datos ni modelo del backend. No se publicó el frontend.
+
+La implementación inicial y sus capturas quedaron registradas en `4b2114e`, comprobado con el log. El siguiente grupo reúne el informe y documentación. No se hizo fetch ni push en esta sesión; la sincronización con el remoto sigue sin comprobarse.
 
 ## Página / frontend
 
@@ -114,7 +116,7 @@ Caso útil: PLANTA–A capacidad 70, A–B capacidad 35; demandas A=20, B=30 m³
 
 ## Informe y documentación
 
-Los cambios de documentación están preparados pero todavía pendientes del commit documental: `Informe.md` refleja llamadas reales y límites de ML/grafos, conserva las métricas reportadas por Matías, completa limitaciones y sustituye citas sin resolver por referencias a la consigna. Algoritmos, selección de modelos y análisis de errores siguen pendientes de cierre técnico.
+`Informe.md` acompaña el desarrollo. Se reescribieron descripciones de ML/grafos para reflejar las llamadas reales y sus límites; se preservan las métricas y la ejecución reportadas por Matías, sin atribuirles reproducción en esta revisión. Se completaron las limitaciones y se quitaron marcas `[cite: ...]`, sustituyéndolas por referencias a páginas de la consigna cuando corresponde. Algoritmos, selección de modelos y análisis de errores siguen pendientes de cierre técnico.
 
 La sección de IA ya incluye herramientas, tareas, ejemplos de instrucciones resumidas, responsabilidades, reflexión y corrección del indicador live. Ciro aclaró que usó paletasdecolores.com.ar y exploró diseños de temática parecida en Figma, sin afirmar prototipado completo o funciones de IA. De su proyecto anterior se documentan solo patrones presentes aquí: TypeScript, componentes/utilidades/tests, separación UI/cliente/backend, mocks y documentación de contexto/continuidad. No se inspeccionó ese proyecto ni se identificaron copias literales; no se atribuye su código a IA. Por pedido expreso de Ciro, registrar únicamente aportes que existan o estén planificados en este proyecto. El indicador live queda como único desacierto visual señalado por Ciro hasta esta revisión; su comentario sobre la IA se registra como observación del integrante. Queda completar el registro de Matías si hubo otras intervenciones.
 
