@@ -1,6 +1,7 @@
-interface Props { nombre: 'agua' | 'red' | 'flujo' | 'flecha' | 'actualizar' | 'alerta' | 'buscar' | 'info' | 'externo'; className?: string }
+interface Props { nombre: 'agua' | 'red' | 'flujo' | 'flecha' | 'actualizar' | 'alerta' | 'buscar' | 'info' | 'externo' | 'brillo'; className?: string }
 
 const trazos: Record<Props['nombre'], string> = {
+  brillo: 'm12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z',
   agua: 'M12 3C9 8 5 11 5 15a7 7 0 0 0 14 0c0-4-4-7-7-12ZM9 15a3 3 0 0 0 3 3',
   red: 'M8 5h8M5 8v8m3 3h8m3-11v8M8 8l8 8M8 16l8-8M3 3h5v5H3Zm13 0h5v5h-5ZM3 16h5v5H3Zm13 0h5v5h-5Z',
   flujo: 'M3 7h15m-4-4 4 4-4 4M21 17H6m4-4-4 4 4 4',

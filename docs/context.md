@@ -8,7 +8,7 @@ TP de una cooperativa de agua: dataset sintético, predicción de demanda a cinc
 
 ## Estado y alcance
 
-Se están agrupando cambios autorizados en commits locales. El usuario realiza el push. Hay otros grupos preparados en la copia de trabajo: entorno reproducible, efectos frontend y documentación de cierre. Las correcciones backend ya están registradas. Este grupo agrega versiones y configuración de despliegue; efectos y documentación de cierre quedan para los grupos siguientes.
+Se están agrupando cambios autorizados en commits locales. El usuario realiza el push. Hay otros grupos preparados en la copia de trabajo: entorno reproducible, efectos frontend y documentación de cierre. Las correcciones backend y el entorno ya están registrados. Este grupo agrega los efectos frontend y sus pruebas. La revisión integral de documentación e informe queda para el último grupo.
 
 No hacer push, publicar servicios ni ampliar el diseño sin la autorización correspondiente. La documentación no lleva fechas exactas ni hashes. Los errores y sus soluciones se documentan en la sección de IA del informe, sin atribución personal.
 
@@ -40,6 +40,14 @@ El escenario multiplica la tasa anual de crecimiento poblacional; no incrementa 
 
 22 pruebas backend aprobadas: inferencia estable por categorías, métricas inválidas/ausentes, error controlado de topología, MST de costo conocido e invariantes de flujo/pipeline. También se verificó HTTP local con métricas ausentes, 16 caudales y balance, predicción individual y rechazo de categoría inválida. No atribuir esos cambios locales a Render hasta publicarlos.
 
+## Efectos frontend y verificación
+
+Ciro eligió React Bits como fuente externa. HoloCard tiene una pestaña propia, carta Pikachu local, reflejos, inclinación y pausa. La vista se carga al abrirla. LatticeLoader aparece solo durante solicitudes reales, reinicia contador por escenario/intento y desaparece en éxito/error. No muestra progreso del algoritmo ni una conexión permanente.
+
+Versiones TypeScript/CSS adaptadas como código local, sin Tailwind ni dependencias nuevas. TechText quedó sin aplicar porque transforma letras, no grafos. Otras mejoras visuales requieren consulta al usuario. Licencia en `../frontend/THIRD_PARTY_NOTICES.md`; decisiones y archivos en `efectos-visuales.md`.
+
+37 pruebas frontend, lint, TypeScript y build aprobados. Las cuatro pruebas nuevas cubren contador, limpieza, retiro ante error/éxito, imagen sin WebGL y navegación sin nuevas simulaciones. Edge verificó reflejos, pausa, movimiento reducido, móvil de 390 px sin desbordamiento y regreso a Capacidad con 17 nodos/16 caudales de Render. Backend/modelo/datos no cambian por estos efectos.
+
 ## Entorno y despliegue
 
 `.python-version` fija Python 3.12.10 y `backend/requirements.txt` fija dependencias directas/transitivas compatibles con scikit-learn 1.9.1, versión del modelo. En Render conservar raíz del repositorio, build `pip install -r backend/requirements.txt` y arranque `uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`. Si existe PYTHON_VERSION, debe coincidir.
@@ -50,4 +58,4 @@ Una copia separada con entornos nuevos pasó instalación, pip check, 22 tests b
 
 ## Próximo paso
 
-Registrar los grupos ya autorizados de entorno/despliegue, efectos y documentación; después el usuario hará push. Repetir instalación en otra computadora, revisar Render y publicar frontend en Vercel cuando corresponda. La arquitectura elegida sigue siendo Vercel + Render.
+Registrar el cierre documental ya autorizado: informe, contrato, revisión de consigna, guías, capturas y contexto completo. Después el usuario hará push. Repetir instalación en otra computadora, revisar Render y publicar frontend en Vercel cuando corresponda. La arquitectura elegida sigue siendo Vercel + Render.

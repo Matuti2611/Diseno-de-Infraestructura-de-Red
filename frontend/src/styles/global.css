@@ -354,3 +354,10 @@ tbody tr.fila-elegida { background: #edf2f6; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; }
 }
+
+/* El indicador solo acompaña solicitudes reales; no es un estado permanente. */
+.estado-resultados .lattice-loader { flex-shrink: 0; }
+@media (max-width: 680px) {
+  .estado-resultados { flex-wrap: wrap; row-gap: 12px; }
+  .estado-resultados > .lattice-loader:last-child { max-width: 100%; text-align: left; }
+}

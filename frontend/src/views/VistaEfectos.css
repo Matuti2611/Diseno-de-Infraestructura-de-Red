@@ -1,0 +1,13 @@
+.vista-efectos { border: 1px solid var(--borde); border-radius: 14px; background: var(--blanco); overflow: hidden; }
+.efectos-introduccion { padding: 28px 30px; border-bottom: 1px solid var(--borde); }
+.efectos-introduccion h2 { font-size: 24px; font-weight: 550; letter-spacing: -.6px; margin-top: 9px; }
+.efectos-introduccion p { color: var(--texto-suave); font-size: 13px; line-height: 1.7; margin-top: 9px; }
+.efectos-escena { margin: 0; padding: 60px 28px 32px; display: flex; flex-direction: column; align-items: center; gap: 28px; background: radial-gradient(ellipse at 50% 45%, #c6d4e166, transparent 65%), #f8f7f4; }
+.efectos-escena figcaption { font-size: 12px; color: var(--texto-suave); margin-top: 12px; }
+.efectos-escena figcaption span { margin: 0 8px; }
+.efectos-nota { color: var(--texto-suave); font-size: 12px; line-height: 1.7; padding: 20px 28px; text-align: center; }
+@media (max-width: 680px) {
+  .efectos-introduccion { padding: 22px 18px; }
+  .efectos-escena { padding: 40px 24px 28px; }
+  .efectos-nota { padding: 18px; }
+}

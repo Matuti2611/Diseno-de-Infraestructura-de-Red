@@ -23,5 +23,5 @@ export function useSimulacion() {
     });
     return () => controlador.abort();
   }, [escenario, intento]);
-  return { ...resultado, escenario, setEscenario, reintentar: () => setIntento(valor => valor + 1) };
+  return { ...resultado, escenario, intento, setEscenario, reintentar: () => setIntento(valor => valor + 1) };
 }
