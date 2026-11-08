@@ -1,4 +1,4 @@
-﻿# Contexto del proyecto para agentes de código
+# Contexto del proyecto para agentes de código
 
 Última actualización: 2026-11-08.
 
@@ -63,40 +63,51 @@ Guía: `../frontend/README.md`. Decisiones: `plan-frontend.md`. Capturas reales:
 
 ## Machine learning
 
-Matías implementó `entrenar.py`: lectura, exclusión ID/objetivo, dummies, partición 80/20 semilla 42 y comparación de regresión lineal/árbol. Exporta regresión lineal a `backend/models/modelo_consumo.joblib`; `predictor.py` la carga. `features.py` y `evaluar.py` siguen vacíos.
+Matías implementó `entrenar.py`: lectura, exclusión ID/objetivo, dummies, partición 80/20 semilla 42 y comparación de regresión lineal/árbol. Exporta regresión lineal a `backend/models/modelo_consumo.joblib`; `predictor.py` la carga. Las métricas de evaluación del conjunto de prueba se persisten en `backend/models/metricas.json` y son leídas dinámicamente por la API.
 
-Informe y API reportan MAE=131.28, RMSE=172.97 y R²=0.9939; no se reprodujeron aquí y la API los tiene como constantes. La página los identifica como reportados por API (errores en m³/mes).
+Métricas reproducidas y persistidas: MAE=131.28 m³/mes, RMSE=172.97 m³/mes y R²=0.9939 (frente a Árbol de Decisión: MAE=197.95, RMSE=308.79, R²=0.9807).
 
-Pendiente con Matías: separar selección/validación de evaluación final, persistir preprocesamiento/métricas, probar referencia sencilla y evitar fuga. El esquema describe un multiplicador de demanda, pero el predictor multiplica la tasa poblacional: la página refleja el cálculo efectivo; falta alinear documentación del backend.
+El multiplicador de escenario se aplica sobre la tasa de crecimiento poblacional proyectada (`crecimiento_poblacional_estimado *= multiplicador`), preservando la semántica del modelo y la presentación del frontend.
 
 ## Grafos e infraestructura
 
-`mst.py` usa `networkx.minimum_spanning_tree`. `flujo.py` crea arcos en ambos sentidos por cañería, agrega supersumidero y usa `networkx.maximum_flow`. `diagnostico.py` calcula flujo neto y filtra utilización >=90 %. `construir.py` y `union_find.py` siguen vacíos.
-
-Pendiente con Matías: implementación propia exigida frente a llamadas de biblioteca, selección explícita del algoritmo de flujo (informe dice Edmonds–Karp) y tests de mínimo costo, conectividad, ciclos, capacidades, conservación, demanda simultánea y desconexión. Todavía no hay pruebas de estos módulos.
-
-Con costos fijos, cambiar demanda no exige cambiar MST. Un árbol mínimo puede ser insuficiente: mostrar suministro/déficit cuando la API los entregue.
+Implementación manual propia conforme a la consigna:
+- `union_find.py`: Estructura `UnionFind` con compresión de caminos y unión por rango.
+- `mst.py`: Algoritmo de Kruskal manual ordenando aristas por costo y previniendo ciclos con `UnionFind`. Valida coincidencia de costo exacto frente a `networkx.minimum_spanning_tree`.
+- `flujo.py`: Algoritmo de Edmonds–Karp manual con búsqueda en anchura (`bfs_manual`) para caminos de aumento residuales. Conecta cada barrio al `SUPER_SUMIDERO` con capacidad igual a su demanda diaria proyectada. Valida coincidencia exacta de caudal máximo abastecido frente a `networkx.maximum_flow`.
+- `diagnostico.py`: `obtener_estados_flujo` reporta la magnitud neta de caudal para los 16 tendidos del MST, porcentaje de utilización y saturación al 100 %. `obtener_aristas_saturadas` preserva el filtrado >=90 %.
 
 ## API y contrato
 
-`POST /api/simular-red` recibe `escenario_crecimiento` (1.0, 1.1, 1.3). Devuelve `nodos`, `tendidos_mst`, `flujos`, `metricas_ml`. FastAPI: `https://infraestructura-red-api.onrender.com`.
-
-Verificación real: 16 barrios, 16 tendidos, dos flujos y demanda base sumada 2167.74 m³/día. Costo MST 73066.05 unidades. El navegador consultó +30 %, con demanda mostrada 2242.3 m³/día. Son observaciones del servicio, no pruebas matemáticas.
-
-**Pendientes de Matías; no se cambió backend en esta etapa:**
-
-1. Planta con coordenadas, candidatos y todos los flujos. El cliente contempla opcionalmente `tendidos_candidatos` con estructura de un tendido.
-2. Suministro total, demanda y déficit con unidades; el pipeline calcula parte pero los descarta.
-3. Separar cercanía de saturación completa. Hoy el filtro >=90 % marca todos `saturada=True`.
-4. Validar escenarios positivos/finitos y errores; alinear semántica de crecimiento.
-5. Persistir métricas verificables y fijar dependencias compatibles con modelo.
-6. Ajustar CORS al origen definitivo de Vercel. Hoy permite cualquier origen con credenciales; preflight local respondió correctamente.
-
-Propuesta concreta en `contrato-api.md`: `resumen_capacidad` opcional con `demanda_total_m3_dia`, `caudal_abastecido_m3_dia`, `deficit_m3_dia`. Se mantiene compatibilidad con respuestas que lo omiten. Validación de totales con tolerancia `max(0.1 m³/día, sumaDemandas × 1e-6)`. Esto no modifica el contrato Python actual: Matías debe coordinar e implementar esa extensión o acordar otra estructura y adaptar el cliente.
+`POST /api/simular-red` recibe `escenario_crecimiento` (validado positivo y finito: `0.0 < escenario <= 5.0`). Cumple con la especificación completa acordada en `contrato-api.md`:
+1. `nodos`: Contiene 17 nodos (la `PLANTA` con sus coordenadas de `planta.csv`, `tipo_zona="PLANTA"` y demanda 0.0, más los 16 barrios).
+2. `tendidos_mst`: Los 16 enlaces elegidos por Kruskal con origen, destino, costo y capacidad máxima.
+3. `tendidos_candidatos`: Las 26 alternativas de tendidos disponibles en la red con costo y capacidad.
+4. `flujos`: 16 registros (la totalidad del MST) con magnitud no negativa, capacidad y booleano `saturada`.
+5. `resumen_capacidad`: Objeto con `demanda_total_m3_dia`, `caudal_abastecido_m3_dia` y `deficit_m3_dia`. Cumple la invariante matemática `demanda_total == caudal_abastecido + deficit`.
+6. `metricas_ml`: Cargadas dinámicamente desde `backend/models/metricas.json`.
+7. CORS configurado con `allow_credentials=False` para compatibilidad estricta con orígenes comodín (`*`) y navegadores modernos.
 
 ## Pruebas y verificación
 
-**Frontend, 08/11/2026:**
+**Backend, 08/11/2026:**
+
+- `python -m unittest discover -s backend/tests -v`: **10 pruebas aprobadas** (0.081 s).
+  - `test_datos.py`: 1 test de repetibilidad y conectividad inicial del dataset sintético.
+  - `test_mst.py`: 3 tests:
+    1. Operaciones básicas de `UnionFind` y detección de ciclos.
+    2. Caso pequeño controlado (4 nodos con descarte de aristas redundantes).
+    3. Invariantes de Kruskal en el grafo real: 17 nodos conexos, 16 aristas (árbol acíclico), pesos positivos y coincidencia exacta con NetworkX (costo 73066.05).
+  - `test_flujo.py`: 2 tests:
+    1. Caso controlado resuelto a mano PLANTA–A–B de `contrato-api.md`:
+       - Caso cubierto (demandas 20 y 30, capacidades 70 y 35): flujo total 50, déficit 0.
+       - Caso insuficiente (demandas 26 y 39, capacidades 70 y 35): cuello de botella en A–B satura en 35, suministro 61, déficit 4.
+    2. Invariantes en red completa: respeto de capacidades máximas y conservación de caudal en cada barrio intermedio frente al super-sumidero. Coincidencia con NetworkX.
+  - `test_pipeline.py`: 4 tests:
+    1. Simulación base completa: 17 nodos, 16 tendidos, 16 flujos, 26 candidatos, balance consistente.
+    2. Crecimiento monótono de demanda al aumentar escenario (1.0 -> 1.1 -> 1.3).
+    3. Validación del endpoint API con respuesta estructurada según esquema.
+    4. Rechazo de escenarios inválidos (menores o iguales a cero).
 
 - `npm.cmd test`: **33 pruebas aprobadas**, cuatro archivos.
 - `npm.cmd run lint`: aprobado.
@@ -147,7 +158,6 @@ Frontend compilado localmente, **sin publicación en Vercel**. `VITE_API_URL` co
 
 ## Próxima secuencia
 
-1. Matías: implementar algoritmos y tests matemáticos, evaluación reproducible de ML y contrato completo, coordinando la propuesta en `contrato-api.md`.
-2. Página: verificar campos reales y un cambio de diagnóstico de extremo a extremo. Caudales y panel de cobertura ya preparados/probados con mocks; no requieren simular resultados en producción.
-3. Ambos: cerrar informe, uso de IA adicional de Matías si lo hubo, resultados reproducidos, capturas finales y defensa. Referencias de diseño y patrones previos de Ciro ya aclaradas.
-4. Verificar instalación/demo completa en otro entorno; registrar código en Git cuando se solicite. Publicar en Vercel conforme a la decisión del grupo y comprobar CORS/HTTPS/despertar de Render.
+1. Backend finalizado: Kruskal manual, Edmonds–Karp manual, persistencia de `metricas.json`, suite de 10 tests unitarios y matemáticos, y contrato API completo (`PLANTA`, candidatos, 16 flujos del MST y `resumen_capacidad` consistente).
+2. Integración y despliegue: actualizar servicio en Render con los cambios del backend y verificar la respuesta real de extremo a extremo con el frontend.
+3. Ambos: cerrar informe (`Informe.md`), reflejar los resultados reproducidos de ML/grafos, capturas finales y preparar la defensa.

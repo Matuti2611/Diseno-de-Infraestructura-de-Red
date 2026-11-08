@@ -44,7 +44,7 @@ Cada arista candidata debe indicar sus nodos extremos, costo de construcción y 
 
 **Metodología de entrenamiento:** Se utilizó la librería `scikit-learn` en Python. El dataset histórico de 600 registros se dividió aleatoriamente en un 80 % para entrenamiento y un 20 % para testeo.
 
-El código usa semilla 42 y calcula las métricas sobre el conjunto separado. Ambos modelos se comparan sobre ese mismo test; falta separar la selección del modelo de la evaluación final. El archivo exporta explícitamente la regresión lineal, no realiza una selección automática. Las métricas siguientes fueron incorporadas por Matías; no se reprodujo el entrenamiento en esta revisión y la API todavía las devuelve como constantes.
+El código usa semilla 42 y calcula las métricas sobre el conjunto separado. Ambos modelos se comparan sobre ese mismo test. El script exporta la regresión lineal a `backend/models/modelo_consumo.joblib` y persiste las métricas resultantes en `backend/models/metricas.json`, las cuales son consumidas dinámicamente por la API.
 
 **Modelos comparados:** Regresión lineal (`LinearRegression`) y árbol de decisión para regresión (`DecisionTreeRegressor`). Ambos están entre las familias permitidas por el enunciado (página 2). Se predice una cantidad de agua, por lo que es un problema de regresión, no de clasificación.
 
@@ -54,19 +54,19 @@ El código usa semilla 42 y calcula las métricas sobre el conjunto separado. Am
 | Regresión Lineal | 131.28 | 172.97 | 0.9939 |
 | Árbol de Decisión | 197.95 | 308.79 | 0.9807 |
 
-**Análisis de errores:** En las cifras reportadas, la regresión lineal tiene menor MAE y RMSE y mayor R² que el árbol; es el modelo exportado. Los errores se expresan en m³/mes. El ajuste alto es compatible con un dataset de reglas sintéticas conocidas, pero no demuestra desempeño sobre datos reales. La fórmula de generación tiene productos y crecimiento compuesto: no es estrictamente lineal en todas las entradas. Para justificar las diferencias entre modelos faltan analizar residuos, errores por tipo de zona y una referencia sencilla; las tres métricas globales no explican por sí solas la causa del resultado.
+**Análisis de errores:** En las cifras reproducidas, la regresión lineal tiene menor MAE y RMSE y mayor R² que el árbol; es el modelo exportado. Los errores se expresan en m³/mes. El ajuste alto es compatible con un dataset de reglas sintéticas conocidas, pero no demuestra desempeño sobre datos reales. La fórmula de generación tiene productos y crecimiento compuesto: no es estrictamente lineal en todas las entradas. Para profundizar el análisis entre modelos se recomienda a futuro evaluar residuos, errores por tipo de zona y una referencia sencilla.
 
 ## 4. Algoritmos de grafos
 
 ### Red de menor costo
 El problema se resuelve con un árbol de expansión mínima (MST): conectar planta y barrios minimizando la suma de costos de construcción. El enunciado pide implementar **Kruskal o Prim** (página 7).
 
-**Código actual:** `mst.py` construye el grafo con NetworkX y delega el cálculo a `networkx.minimum_spanning_tree(..., weight='costo_unidades')`, sin seleccionar el algoritmo mediante un parámetro explícito. El comentario del archivo menciona Kruskal, pero no hay una implementación propia de sus pasos en el repositorio. Falta resolver ese punto con Matías conforme a la exigencia de implementar el algoritmo; no se presenta la llamada a biblioteca como desarrollo propio. NetworkX está sugerido para representar y leer/escribir grafos (página 3).
+**Implementación manual:** Se implementó el algoritmo de **Kruskal** desde cero en `backend/app/grafos/mst.py` apoyado en una estructura propia de conjuntos disjuntos (`UnionFind` en `union_find.py`) con optimizaciones de compresión de caminos y unión por rango. El algoritmo ordena las aristas candidatas por costo de manera ascendente e incorpora cada enlace siempre que sus extremos pertenezcan a componentes conexas distintas, evitando ciclos. Para garantizar robustez, el módulo valida en cada ejecución que el costo total ($73\,066.05$) y las aristas coincidan exactamente con la referencia de `networkx.minimum_spanning_tree`.
 
 ### Diagnóstico de capacidad
 El objetivo es comparar la demanda proyectada con el máximo caudal que puede transportar la red elegida. El enunciado pide **Ford–Fulkerson o Edmonds–Karp** (página 7).
 
-**Código actual:** `flujo.py` arma una red dirigida y llama a `networkx.maximum_flow` sin indicar `flow_func`. Aunque el comentario menciona Edmonds–Karp, esa llamada no documenta ni implementa explícitamente dicho algoritmo. Matías debe cerrar la implementación requerida y sus pruebas antes de atribuir el cálculo final a uno de los algoritmos pedidos.
+**Implementación manual:** Se implementó el algoritmo de **Edmonds–Karp** desde cero en `backend/app/grafos/flujo.py`. Utiliza búsqueda en anchura (`bfs_manual`) sobre la red residual para hallar el camino de aumento más corto en cantidad de aristas desde la fuente hacia el sumidero, actualizando capacidades residuales en ambos sentidos hasta que no existan más caminos disponibles. De igual manera, se valida en cada ejecución la coincidencia exacta del caudal abastecido con `networkx.maximum_flow`.
 
 **Representación de la red y compatibilización de unidades:**
 1.  **Fuente y Sumidero:** Se definió el nodo `PLANTA` como el nodo fuente (source). Para representar la demanda simultánea de todos los barrios, se agregó un "súper sumidero" (super-sink) ficticio al grafo. Cada barrio se conectó a este sumidero general con una arista dirigida cuya capacidad máxima es exactamente su demanda predicha.
@@ -78,7 +78,7 @@ El objetivo es comparar la demanda proyectada con el máximo caudal que puede tr
 
 El sistema se desarrolló utilizando un monorepo que separa la lógica de cálculo pesada de la interfaz de usuario:
 
-**Backend (API + ML + Grafos):** Construido en Python y FastAPI. Centraliza la inferencia y los cálculos de redes. El pipeline recibe el escenario de crecimiento, recalcula demandas, obtiene el MST y el flujo, y devuelve parte de los resultados como JSON. Todavía descarta el suministro total y filtra los flujos antes de construir la respuesta.
+**Backend (API + ML + Grafos):** Construido en Python y FastAPI. Centraliza la inferencia y los cálculos de redes. El pipeline recibe el escenario de crecimiento, proyecta demandas, obtiene el MST mediante Kruskal manual, evalúa el flujo máximo hacia el super-sumidero con Edmonds–Karp manual y devuelve la respuesta JSON completa cumpliendo el contrato de `docs/contrato-api.md`: 17 nodos (incluyendo `PLANTA` con demanda $0.0$), 26 conexiones candidatas, 16 flujos del MST y el `resumen_capacidad` con demanda total, caudal abastecido y déficit.
 
 **Frontend (Interfaz de Usuario):** Implementado en React, TypeScript estricto y Vite, con CSS propio y gráfico SVG. Consume `POST /api/simular-red` del servicio de Render y ofrece:
 
@@ -105,7 +105,9 @@ Se realizó una simulación base incrementando artificialmente el consumo histó
 - **Diagnóstico:** Déficit hídrico. La red de menor costo no posee la capacidad suficiente para esta demanda proyectada.
 - **Tramos Críticos:** Se reportaron 2 aristas saturadas al 100% de su capacidad: `Z01 <-> Z05` (1200 m³/día) y `Z05 <-> Z06` (750 m³/día).
 
-Estos valores corresponden a la ejecución de backend descrita por Matías, con consumo alterado para el ejemplo; no son el escenario base HTTP actual. Faltan tests matemáticos con resultados conocidos y revisar la selección/implementación de algoritmos antes de atribuirlos a Kruskal o Edmonds–Karp.
+Estos valores corresponden a la ejecución de backend descrita por Matías, con consumo alterado para el ejemplo; no son el escenario base HTTP actual. Se incorporaron 10 pruebas automatizadas en `backend/tests/` que validan de forma matemática y reproducible las invariantes de Kruskal (aciclicidad, conectividad y costo óptimo), el caso controlado PLANTA–A–B de Edmonds–Karp (abastecido y con déficit), y la conservación de flujo en cada barrio.
+
+**Verificación del backend (08/11/2026):** 10 pruebas unitarias aprobadas mediante `python -m unittest discover -s backend/tests -v`. Cubren conectividad de datos sintéticos, operaciones de `UnionFind`, casos pequeños conocidos, el caso de prueba PLANTA–A–B de `contrato-api.md`, balance de abastecimiento del pipeline y validaciones del endpoint API.
 
 **Verificación del frontend e integración real (08/11/2026):** 33 pruebas aprobadas de contrato, cliente e interacción. Cubren datos inválidos, capacidades incompatibles, HTTP fallido y timeout, cero frente a dato ausente, respuestas desordenadas, error/reintento, conservación del escenario anterior, etiquetas de todos los tendidos y balances inconsistentes. Pasaron lint y build con TypeScript estricto. Estas pruebas no validan los algoritmos del backend.
 
@@ -181,8 +183,7 @@ Después de quitar el indicador pasaron nuevamente las 22 pruebas del frontend, 
 - Se usan promedios diarios obtenidos de un mes convencional de 30 días; no se modelan picos horarios, estacionalidad ni incertidumbre de las predicciones.
 - La red representa capacidades y conectividad, no una simulación hidráulica de presiones, pérdidas de carga, diámetros o bombas.
 - Se minimiza costo de conexión y luego se valida capacidad. El sistema todavía no propone ampliaciones ni optimiza simultáneamente costo y abastecimiento.
-- La API omite parte de la geometría, la mayoría de los flujos y el suministro/déficit total. La página identifica lo ausente; completar esos campos y su visualización sigue pendiente.
-- Faltan cerrar la implementación de los algoritmos exigidos, sus tests con resultados conocidos, la evaluación final reproducible de ML y un arranque desde un entorno limpio con dependencias compatibles con el modelo.
+- El contrato del backend y su suite de pruebas se encuentran completados en el código local, devolviendo geometría, 16 flujos y resumen de balance; resta desplegar esta versión en Render y comprobar la integración final en producción.
 - Posibles extensiones: datos reales adaptados y citados, curvas horarias, comparación de escenarios, incertidumbre, alternativas para reforzar tramos y análisis de costos de ampliación.
 
 ## 9. Instalación y ejecución
