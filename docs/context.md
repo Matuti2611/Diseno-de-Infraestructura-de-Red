@@ -30,9 +30,11 @@ El usuario autorizó integrar los cambios. Se aplicó un merge conservando ambos
 
 **Base aprobada para la siguiente etapa:** conservar React + TypeScript estricto + Vite; CSS propio y SVG para el grafo de 17 nodos; un panel con vistas Tendidos y Capacidad, selector de escenarios y tabla accesible. El diseño visual detallado se desarrolla dentro de ese alcance.
 
+**Paleta aportada por el usuario (2026-11-08):** `#44749d` principal, `#c6d4e1` apoyo, `#ffffff` superficies, `#ebe7e0` fondo y `#bdb8ad` separadores decorativos. Los roles y consideraciones de contraste están en `plan-frontend.md`. Los efectos decorativos quedan para después; no agregar bibliotecas de animación para esta primera etapa. Solo se documentó la paleta: todavía no hay CSS ni interfaz implementados.
+
 **Integración prevista:** cliente de API aislado de los componentes y modo demostración explícito mientras Matías desarrolla el backend. Ningún fallback silencioso de API fallida a datos simulados. No calcular MST, predicciones ni flujo en el navegador.
 
-**Próximo paso:** inicializar la aplicación y su primera vista; acordar con Matías los campos faltantes de la API ya publicada y verificada. La parte visual puede avanzar con datos de ejemplo identificados como tales mientras se completa el contrato real.
+**Próximo paso:** inicializar la aplicación y su primera vista con la paleta elegida; acordar con Matías los campos faltantes de la API ya publicada y verificada. La parte visual puede avanzar con datos de ejemplo identificados como tales mientras se completa el contrato real.
 
 ## Datos
 

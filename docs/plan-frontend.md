@@ -28,7 +28,17 @@ Un único panel con dos vistas: **Tendidos** y **Capacidad**. El encabezado iden
 - Escritorio: grafo y resumen en columnas; tabla debajo. Móvil/tablet: bloques apilados, controles accesibles y tabla con desplazamiento horizontal si hace falta.
 - El grafo tiene leyenda y selección de un nodo/arista con detalle. La tabla ofrece acceso equivalente a la información. Los estados usan texto además de color.
 
-Dirección visual propuesta: panel técnico claro, fondo neutro, azul para la red, verde para operación dentro de capacidad y ámbar/rojo para advertencias y saturación. Sin fotografías decorativas. Diseño visual concreto pendiente de aprobación.
+Dirección visual: panel técnico claro, con la paleta compartida por el usuario el 2026-11-08. La prioridad es la lectura del grafo, las cifras y el diagnóstico. Los códigos de efectos decorativos quedan para después, según indicó el usuario.
+
+| Color | Papel previsto |
+| --- | --- |
+| `#44749d` | Azul principal: botones, selección, foco y red elegida |
+| `#c6d4e1` | Azul claro: superficies de apoyo y selección suave |
+| `#ffffff` | Tarjetas, tablas y superficies de lectura |
+| `#ebe7e0` | Fondo general cálido |
+| `#bdb8ad` | Separadores y bordes decorativos |
+
+Al implementar, expresar estos colores como variables CSS con nombres semánticos para mantener el estilo coherente. El contraste calculado entre blanco y azul principal es 4,96:1; entre azul principal y fondo cálido es 4,03:1. El gris y el azul claro tienen poco contraste sobre blanco: reservarlos para superficies o decoración. Usar un tono de texto oscuro derivado de la paleta para lectura sobre fondos claros y un foco bien visible; comprobar los estados concretos del diseño, no solo los colores aislados. Los diagnósticos de capacidad deberán identificarse también con texto y símbolos.
 
 ## 4. Flujos y estados
 
