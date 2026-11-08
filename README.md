@@ -4,7 +4,10 @@
 
 - [Contexto actualizado del proyecto](docs/context.md): estado real de página, datos, ML, grafos, API y pruebas; debe revisarse y actualizarse ante cambios importantes, commits y push.
 - [Plan de arquitectura del frontend](docs/plan-frontend.md): alcance inicial aprobado, flujos, contrato propuesto, alternativas y etapas; implementación pendiente.
+- [Guía de despliegue](docs/despliegue.md): Vercel para la página y Render para la API, configuración prevista y pasos pendientes antes de publicar.
 - [Instrucciones para agentes de código](AGENTS.md): lectura del contexto, mantenimiento de documentación y criterios de trabajo y pruebas.
+
+API de prueba desplegada en Render: [documentación interactiva](https://infraestructura-red-api.onrender.com/docs). El 08/11/2026 se verificó que la documentación y una simulación base responden con HTTP 200. El frontend sigue pendiente y las pruebas matemáticas del backend todavía deben completarse.
 
 ## Primer paso: generar los datos del caso sintético
 

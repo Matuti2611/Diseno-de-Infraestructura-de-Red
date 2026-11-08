@@ -1,6 +1,6 @@
 # Contexto del proyecto para agentes de código
 
-Última actualización: 2026-11-07.
+Última actualización: 2026-11-08.
 
 > Documento vivo: leer antes de trabajar y actualizar ante cada cambio importante. Antes de commits y push, revisar y actualizar las secciones afectadas junto con el cambio. Las reglas completas están en `../AGENTS.md`.
 
@@ -22,7 +22,7 @@ Recorrido esperado: datos → regresión → demanda por nodo → Kruskal o Prim
 
 El 2026-11-07 se ejecutó `git fetch origin`: el remoto avanzó de `3139802` a `7ed8245` con siete commits de Matías (ML, modelo exportado, grafos, API e informe). La rama local conservaba `19e4f36` con el contexto y el plan de frontend.
 
-El usuario autorizó integrar los cambios. Se aplicó un merge conservando ambos historiales; no hubo conflictos de contenido. El código del backend, el modelo y el informe de Matías se conservan sin modificaciones. Esta integración actualiza el contexto, el plan y el README para reflejar el nuevo estado. El push sigue a cargo del usuario y no se realizó en esta sesión. El frontend continúa sin implementar y no se instalaron dependencias nuevas.
+El usuario autorizó integrar los cambios. Se aplicó un merge conservando ambos historiales; no hubo conflictos de contenido. El código del backend, el modelo y el informe de Matías se conservan sin modificaciones. La integración quedó en `49707da`; el log de Render compartido el 2026-11-08 confirma que ese commit ya fue publicado por el usuario en GitHub. El frontend continúa sin implementar y no se instalaron dependencias nuevas en este entorno.
 
 ## Página / frontend
 
@@ -32,7 +32,7 @@ El usuario autorizó integrar los cambios. Se aplicó un merge conservando ambos
 
 **Integración prevista:** cliente de API aislado de los componentes y modo demostración explícito mientras Matías desarrolla el backend. Ningún fallback silencioso de API fallida a datos simulados. No calcular MST, predicciones ni flujo en el navegador.
 
-**Próximo paso:** compartir la integración mediante push a cargo del usuario; después acordar los campos faltantes del JSON e inicializar la aplicación y su primera vista con datos de ejemplo identificados como tales. La parte visual puede avanzar mientras se termina de acordar el contrato real.
+**Próximo paso:** inicializar la aplicación y su primera vista; acordar con Matías los campos faltantes de la API ya publicada y verificada. La parte visual puede avanzar con datos de ejemplo identificados como tales mientras se completa el contrato real.
 
 ## Datos
 
@@ -105,6 +105,20 @@ Caso conocido útil: PLANTA–A con capacidad 70 m³/día, A–B con 35; demanda
 
 El README explica generación y prueba de datos. Matías ya agregó el backend pero falta documentar instalación, versiones y arranque desde la raíz. Mantenerlo actualizado al implementar cada etapa.
 
+## Hosting y despliegue
+
+El usuario eligió **Vercel para la página y Render para FastAPI** el 2026-11-07. `despliegue.md` contiene la comparación y los pasos de configuración. El 2026-11-08 compartió el log de un intento de despliegue hecho desde Render: el servicio pudo clonar el repositorio y seleccionar `49707da`, por lo que el push de la integración ya está confirmado por ese log. Tras un primer fallo por la ruta de requirements, el usuario informó build exitoso y compartió `https://infraestructura-red-api.onrender.com`. Se comprobaron por HTTP la documentación, el contrato OpenAPI y una simulación base: los tres respondieron 200. No se conoce el plan elegido.
+
+Vercel también soporta FastAPI: no asumir que exige una Lambda externa ni que Python lo hace inviable. Antes de optar por funciones, medir el paquete con las dependencias científicas y comprobar la lectura del modelo/CSV. Para Render gratuito, contemplar suspensión tras inactividad y demora al reiniciar. Un VPS autoadministrado requiere administrar el servidor; Lambda agrega empaquetado, permisos y exposición HTTP.
+
+La página se desarrollará con dirección de API configurable. La elección de hosting no exige cambiar el stack aprobado. Quedan pendientes probar dependencias/versiones y memoria del backend, configurar rutas/entornos y CORS, y validar el recorrido completo por HTTPS. El modelo se entrena antes de publicar, no por petición.
+
+Configuración prevista: Render desde la raíz completa, build `pip install -r backend/requirements.txt`, arranque `uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT` y Python 3.12.10 como base local conocida. Vercel desde `frontend/`, build `npm run build`, salida `dist` y dirección de API en `VITE_API_URL` cuando se implemente el cliente. La versión de Python por sí sola no garantiza compatibilidad con el modelo: fijar las bibliotecas del entrenamiento.
+
+El problema anterior de acceso al repositorio dejó de bloquear el deploy: Render ya lo clonó. El frontend todavía está vacío y no puede desplegarse hasta implementar y probar su build.
+
+Fallo anterior resuelto: Render ejecutaba `pip install -r requirements.txt` desde la raíz, aunque el archivo está en `backend/requirements.txt`. Se indicó corregir el Build Command y el siguiente despliegue ya responde. El log inicial confirmó Python 3.12.10. El 2026-11-08 se verificaron `GET /docs`, `GET /openapi.json` y `POST /api/simular-red` con `escenario_crecimiento=1.0`: HTTP 200, 16 barrios, 16 tendidos MST, 2 tramos de flujo reportados y demanda diaria sumada de 2167.74 m³/día. Estos resultados verifican el recorrido HTTP y la carga del modelo; no demuestran la corrección matemática de predicciones, métricas o algoritmos.
+
 ## Entorno y comandos conocidos
 
 - Python probado: 3.12.10.
@@ -113,11 +127,11 @@ El README explica generación y prueba de datos. Matías ya agregó el backend p
 - Generar datos: `python backend/app/data/generar_dataset.py`.
 - Prueba actual: `python -m unittest discover -s backend/tests -v`.
 - El backend ahora tiene requisitos declarados, pero no se instalaron en esta sesión. El arranque previsto desde la raíz es `python -m uvicorn backend.app.main:app --reload`; todavía no se verificó aquí.
-- No hay scripts de frontend, variables de entorno ni despliegue configurados todavía.
+- No hay scripts ni configuración de entorno de frontend. Render ya tiene un servicio configurado y `PYTHON_VERSION=3.12.10`; arranque y simulación base públicos verificados por HTTP. El cliente de la página deberá usar `https://infraestructura-red-api.onrender.com` como dirección configurable.
 
 ## Próxima secuencia
 
-1. Push de la integración a cargo del usuario y acuerdo de los campos/semántica pendientes del contrato con Matías.
+1. Acordar los campos/semántica pendientes del contrato con Matías; la API base ya está disponible para integrar.
 2. Usuario: frontend con datos de ejemplo explícitos y pruebas de comportamiento.
 3. Matías: pruebas del backend agregado y ajustes de contrato, validación y algoritmos necesarios.
 4. Integración con API real, escenarios completos, informe y ejecución reproducible.

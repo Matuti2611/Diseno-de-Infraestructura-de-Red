@@ -99,7 +99,7 @@ Comprobaciones para cerrar una etapa de frontend: tests relevantes, lint, TypeSc
 
 Validar el escenario en servidor; el navegador no determina totales ni capacidades. Mostrar textos como contenido, no interpretar HTML devuelto por la API. No exponer secretos en configuración del frontend. La dirección de la API es configuración pública; CORS se configura en FastAPI para el origen de la página.
 
-Local: desarrollo con API local o demostración explícita. Preview y publicación: definir destino y URL del backend al aprobar el despliegue. No hay hosting ni servicios externos creados. No se necesitan pagos, email, uploads ni autenticación para el MVP.
+Local: desarrollo con API local o demostración explícita. El usuario eligió Vercel para el frontend y Render para FastAPI; la configuración y las alternativas evaluadas están en [despliegue.md](despliegue.md). La API ya responde en `https://infraestructura-red-api.onrender.com`; se verificaron documentación y simulación base el 2026-11-08. El frontend y su publicación siguen pendientes. El cliente consumirá una dirección configurable propuesta como `VITE_API_URL`. No se necesitan pagos, email, uploads ni autenticación para el MVP.
 
 Usar HTML semántico, labels, controles por teclado, foco visible y contraste suficiente. Ofrecer tabla y leyenda como complemento del SVG y mensajes de carga/error comprensibles para tecnologías de asistencia.
 
