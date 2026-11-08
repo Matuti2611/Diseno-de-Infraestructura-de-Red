@@ -5,11 +5,9 @@ from backend.app.grafos.union_find import UnionFind
 def calcular_red_menor_costo(ruta_aristas_csv):
     df_aristas = pd.read_csv(ruta_aristas_csv)
     
-    # 1. Obtener todos los nodos únicos
     nodos = set(df_aristas['origen']).union(set(df_aristas['destino']))
     uf = UnionFind(nodos)
     
-    # 2. Ordenar aristas por peso (costo) para Kruskal
     aristas_ordenadas = df_aristas.sort_values('costo_unidades')
     
     # Vamos a guardar el resultado en un objeto de NetworkX SOLO para mantener 
@@ -17,7 +15,6 @@ def calcular_red_menor_costo(ruta_aristas_csv):
     mst_manual = nx.Graph()
     costo_manual = 0
     
-    # 3. Lógica de Kruskal desde cero
     for _, fila in aristas_ordenadas.iterrows():
         u, v = fila['origen'], fila['destino']
         costo, cap = fila['costo_unidades'], fila['capacidad_m3_dia']
@@ -26,7 +23,6 @@ def calcular_red_menor_costo(ruta_aristas_csv):
             mst_manual.add_edge(u, v, costo_unidades=costo, capacidad_m3_dia=cap)
             costo_manual += costo
             
-    # --- VALIDACIÓN CON NETWORKX ---
     G_base = nx.from_pandas_edgelist(df_aristas, source='origen', target='destino', edge_attr=['costo_unidades', 'capacidad_m3_dia'])
     mst_nx = nx.minimum_spanning_tree(G_base, weight='costo_unidades')
     costo_nx = sum(datos['costo_unidades'] for _, _, datos in mst_nx.edges(data=True))

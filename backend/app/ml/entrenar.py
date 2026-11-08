@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import joblib
+import json
 import os
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
@@ -21,14 +22,22 @@ modelos = {
     "Árbol de Decisión": DecisionTreeRegressor(random_state=42)
 }
 
+metricas_dict = {}
+
 for nombre, modelo in modelos.items():
     modelo.fit(X_train, y_train)
     
     predicciones = modelo.predict(X_test)
     
-    mae = mean_absolute_error(y_test, predicciones)
-    rmse = np.sqrt(mean_squared_error(y_test, predicciones))
-    r2 = r2_score(y_test, predicciones)
+    mae = float(mean_absolute_error(y_test, predicciones))
+    rmse = float(np.sqrt(mean_squared_error(y_test, predicciones)))
+    r2 = float(r2_score(y_test, predicciones))
+    
+    metricas_dict[nombre] = {
+        "mae": round(mae, 2),
+        "rmse": round(rmse, 2),
+        "r2": round(r2, 4)
+    }
     
     print(f"--- {nombre} ---")
     print(f"MAE:  {mae:.2f}")
@@ -40,4 +49,8 @@ os.makedirs('backend/models', exist_ok=True)
 mejor_modelo = modelos["Regresión Lineal"]
 joblib.dump(mejor_modelo, 'backend/models/modelo_consumo.joblib')
 
-print("Modelo de Regresión Lineal guardado exitosamente en backend/models/modelo_consumo.joblib")
+with open('backend/models/metricas.json', 'w', encoding='utf-8') as f:
+    json.dump(metricas_dict["Regresión Lineal"], f, indent=2)
+
+print("Modelo guardado en backend/models/modelo_consumo.joblib")
+print("Métricas guardadas en backend/models/metricas.json")
