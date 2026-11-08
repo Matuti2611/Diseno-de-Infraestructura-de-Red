@@ -1,15 +1,13 @@
-import pandas as pd
-from backend.app.config import (
-    RUTA_ZONAS, RUTA_PLANTA, RUTA_ARISTAS, DIAS_MES
-)
+from backend.app.config import RUTA_ARISTAS, DIAS_MES
+from backend.app.data.cargar import cargar_zonas, cargar_planta, cargar_aristas
 from backend.app.ml.predictor import predecir_demanda
 from backend.app.grafos.mst import calcular_red_menor_costo
 from backend.app.grafos.flujo import evaluar_flujo
-from backend.app.grafos.diagnostico import obtener_estados_flujo, obtener_aristas_saturadas
+from backend.app.grafos.diagnostico import obtener_estados_flujo
 
-df_zonas_base = pd.read_csv(RUTA_ZONAS)
-df_planta_base = pd.read_csv(RUTA_PLANTA)
-df_candidatas_base = pd.read_csv(RUTA_ARISTAS)
+df_zonas_base = cargar_zonas()
+df_planta_base = cargar_planta()
+df_candidatas_base = cargar_aristas()
 
 def ejecutar_simulacion(escenario_crecimiento: float):
     # 1. Proyección de demanda mensual y conversión a diaria

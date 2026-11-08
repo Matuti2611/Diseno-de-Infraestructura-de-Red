@@ -1,19 +1,16 @@
-import pandas as pd
-import numpy as np
-import joblib
-import json
 import os
+import json
+import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from backend.app.config import RUTA_HISTORIAL, RUTA_MODELO, RUTA_METRICAS
+from backend.app.data.cargar import cargar_historial
+from backend.app.ml.features import preparar_features_entrenamiento
+from backend.app.ml.evaluar import evaluar_modelo, imprimir_reporte_evaluacion
 
-df = pd.read_csv('backend/data/raw/historial_consumo.csv')
-
-X = df.drop(columns=['nodo_id', 'consumo_futuro'])
-y = df['consumo_futuro']
-
-X = pd.get_dummies(X, columns=['tipo_zona'], drop_first=True)
+df = cargar_historial(RUTA_HISTORIAL)
+X, y = preparar_features_entrenamiento(df)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
@@ -26,31 +23,19 @@ metricas_dict = {}
 
 for nombre, modelo in modelos.items():
     modelo.fit(X_train, y_train)
-    
     predicciones = modelo.predict(X_test)
     
-    mae = float(mean_absolute_error(y_test, predicciones))
-    rmse = float(np.sqrt(mean_squared_error(y_test, predicciones)))
-    r2 = float(r2_score(y_test, predicciones))
-    
-    metricas_dict[nombre] = {
-        "mae": round(mae, 2),
-        "rmse": round(rmse, 2),
-        "r2": round(r2, 4)
-    }
-    
-    print(f"--- {nombre} ---")
-    print(f"MAE:  {mae:.2f}")
-    print(f"RMSE: {rmse:.2f}")
-    print(f"R²:   {r2:.4f}\n")
+    metricas = evaluar_modelo(y_test, predicciones)
+    metricas_dict[nombre] = metricas
+    imprimir_reporte_evaluacion(nombre, y_test, predicciones)
 
 os.makedirs('backend/models', exist_ok=True)
 
 mejor_modelo = modelos["Regresión Lineal"]
-joblib.dump(mejor_modelo, 'backend/models/modelo_consumo.joblib')
+joblib.dump(mejor_modelo, RUTA_MODELO)
 
-with open('backend/models/metricas.json', 'w', encoding='utf-8') as f:
+with open(RUTA_METRICAS, 'w', encoding='utf-8') as f:
     json.dump(metricas_dict["Regresión Lineal"], f, indent=2)
 
-print("Modelo guardado en backend/models/modelo_consumo.joblib")
-print("Métricas guardadas en backend/models/metricas.json")
+print(f"Modelo guardado en {RUTA_MODELO}")
+print(f"Métricas guardadas en {RUTA_METRICAS}")
