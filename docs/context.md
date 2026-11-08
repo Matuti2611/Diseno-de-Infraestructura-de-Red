@@ -47,15 +47,15 @@ Generador estándar Python, semilla 42, una planta, 16 barrios, 600 observacione
 
 ## Machine learning
 
-`features.py` prepara datos; `entrenar.py` compara regresión lineal y árbol con split 80/20 y semilla 42. Exporta explícitamente la regresión lineal y escribe métricas JSON. `evaluar.py` calcula MAE/RMSE/MSE/R². `predictor.py` carga el artefacto y aplica el multiplicador a crecimiento.
-
-Reentrenamiento **en memoria**, sin sobrescribir archivos, reprodujo: lineal MAE 131.28/RMSE 172.97/R² 0.9939; árbol MAE 197.95/RMSE 308.79/R² 0.9807. Error en m³/mes. Scikit-learn 1.9.1 coincide con versión del modelo serializado.
-
-Correcciones locales verificadas, documentadas como errores de propuestas de IA en el informe:
-
-- Inferencia genera dummies sin eliminar la primera categoría del lote y reindexa con las columnas del modelo. Las predicciones individuales y por tipo coinciden con el lote completo; el endpoint limita tipos admitidos. No se reentrenó el modelo y el balance de la simulación base se conserva.
-- `ml/metricas.py` centraliza lectura/validación sin constantes. `metricas_ml` ahora es nullable en el esquema; archivo ausente/corrupto/incompleto/no finito produce null en simulación y consulta de métricas. El frontend ya lo soportaba. Se verificó por HTTP local sin tocar archivos reales.
-- Pendiente metodológico: separar selección/evaluación final, justificar features espaciales y profundizar análisis de errores contra referencia simple.
+Matías cerró la metodología, justificación de features y evaluación de ML en `entrenar.py`:
+- **Separación de validación y test:** Selección de modelo mediante validación cruzada 5-Fold dentro del 80 % de entrenamiento (480 muestras) y reserva estricta del 20 % (120 muestras) como conjunto de prueba final no visto.
+- **Justificación de features:** Comparación experimental en validación cruzada entre incluir y excluir variables espaciales (`latitud`, `longitud`, `fila`, `columna`). Excluirlas redujo el MAE de CV de 142.65 a 141.80 m³/mes y evitó sobreajuste por ruido aleatorio en coordenadas que no intervienen en el consumo.
+- **Comparación de modelos:** En validación cruzada 5-Fold, Regresión Lineal superó a Árbol de Decisión (MAE CV 141.80 frente a 186.66 m³/mes). Se reentrenó en todo el 80 % y se exportó a `backend/models/modelo_consumo.joblib`.
+- **Evaluación final en test (20 %):** MAE = 130.11 m³/mes, RMSE = 172.14 m³/mes, R² = 0.9940, MAPE = 3.57 %. Persistidas en `backend/models/metricas.json` y consumidas por la API.
+- **Análisis de errores:** Desglose en test por tipo de zona: Residencial MAE=106.83 (3.79 %), Comercial MAE=128.09 (2.62 %), Industrial MAE=326.67 (4.48 %). El mayor error absoluto en industria responde a la escala de consumo (~8600 frente a ~3500 m³/mes), manteniéndose el error relativo uniforme por debajo del 5 %. Muestra de residuos documentada en JSON e informe.
+- `features.py`: funciones `preparar_features_entrenamiento` (con exclusión de espaciales) y `preparar_features_inferencia` (asegura coincidencia exacta con `modelo.feature_names_in_`).
+- `evaluar.py`: cálculo de métricas globales (MAE, RMSE, MSE, R², MAPE), evaluación por subgrupos y extracción de residuos.
+- `ml/metricas.py`: centraliza lectura/validación de `metricas.json`. `metricas_ml` es nullable en el esquema; si el archivo no existe o es inválido produce `null` sin fallar.
 
 ## Grafos e infraestructura
 

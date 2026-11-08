@@ -40,21 +40,54 @@ Cada arista candidata debe indicar sus nodos extremos, costo de construcción y 
 
 **Objetivo:** Proyectar el consumo futuro de cada zona a partir de sus características disponibles al momento de predecir.
 
-**Preparación de datos (Features):** `entrenar.py` descarta `nodo_id` y el objetivo `consumo_futuro` de las entradas. Codifica `tipo_zona` mediante *one-hot encoding*. El código conserva población, consumo histórico, crecimiento, coordenadas, fila y columna. Población, consumo, tipo de zona y crecimiento permiten describir la demanda; coordenadas, fila y columna son variables espaciales que todavía deben justificarse o excluirse en la revisión de features, ya que no participan directamente en la fórmula del objetivo sintético y algunas son redundantes.
+**Preparación y selección de variables (Features):** 
+El dataset histórico cuenta con variables demográficas (`poblacion`), de consumo (`consumo_historico_mensual`), de proyección (`crecimiento_poblacional_estimado`), categóricas (`tipo_zona`) y espaciales (`latitud`, `longitud`, `fila`, `columna`).
+- **One-hot encoding:** `tipo_zona` se codifica en variables binarias (*dummies*) descartando la primera categoría de referencia para evitar colinealidad.
+- **Justificación de variables espaciales:** Se contrastó experimentalmente en validación cruzada el rendimiento del modelo con y sin coordenadas espaciales. La fórmula generadora del consumo depende de la población, el tipo de zona y el crecimiento anual, mientras que las coordenadas y posiciones de cuadrícula fueron diseñadas exclusivamente para la geometría física de la red y las distancias de cañería. Los resultados demostraron que excluir las variables espaciales reduce el error medio (el MAE en validación cruzada bajó de 142.65 a 141.80 m³/mes en la regresión lineal, y de 194.37 a 186.66 m³/mes en el árbol de decisión). Al quitarlas se simplifica el modelo, se reduce la dimensionalidad y se evita que el estimador aprenda correlaciones espaciales espurias producto del ruido sintético.
 
-**Metodología de entrenamiento:** Se utilizó la librería `scikit-learn` en Python. El dataset histórico de 600 registros se dividió aleatoriamente en un 80 % para entrenamiento y un 20 % para testeo.
+**Metodología de entrenamiento y validación:**
+Para no utilizar el conjunto de prueba como criterio de decisión ("examen final para elegir modelo"), se implementó una partición estricta en dos etapas:
+1. **Partición inicial 80/20:** El dataset de 600 observaciones se dividió aleatoriamente con semilla `42`, reservando el 20 % (120 observaciones) exclusivamente para la evaluación final inalterada.
+2. **Validación cruzada K-Fold ($K=5$) en entrenamiento:** Dentro del 80 % de entrenamiento (480 observaciones), se compararon los modelos mediante validación cruzada con 5 pliegues para seleccionar la mejor arquitectura y validar la selección de features.
 
-El código usa semilla 42 y calcula las métricas sobre el conjunto separado. Ambos modelos se comparan sobre ese mismo test: falta separar la elección del modelo de la evaluación final. El script exporta explícitamente la regresión lineal a `backend/models/modelo_consumo.joblib` y escribe métricas en `backend/models/metricas.json`. La API lee y valida ese archivo; si falta o es inválido devuelve `null`, sin cifras de respaldo. La corrección se explica en la sección de errores de IA.
-
-**Modelos comparados:** Regresión lineal (`LinearRegression`) y árbol de decisión para regresión (`DecisionTreeRegressor`). Ambos están entre las familias permitidas por el enunciado (página 2). Se predice una cantidad de agua, por lo que es un problema de regresión, no de clasificación.
-
-**Métricas obtenidas (sobre el 20 % de testeo):**
-| Modelo | MAE | RMSE | R² |
+**Comparación de modelos en validación cruzada (5-Fold sobre el 80 % de Train):**
+| Modelo y configuración | MAE CV (m³/mes) | RMSE CV (m³/mes) | R² CV |
 | :--- | :--- | :--- | :--- |
-| Regresión Lineal | 131.28 | 172.97 | 0.9939 |
-| Árbol de Decisión | 197.95 | 308.79 | 0.9807 |
+| **Regresión Lineal (sin espaciales)** | **141.80** | **193.86** | **0.9930** |
+| Regresión Lineal (con espaciales) | 142.65 | 194.68 | 0.9930 |
+| Árbol de Decisión (sin espaciales) | 186.66 | 288.42 | 0.9846 |
+| Árbol de Decisión (con espaciales) | 194.37 | 296.84 | 0.9837 |
 
-**Análisis de errores:** En las cifras reproducidas, la regresión lineal tiene menor MAE y RMSE y mayor R² que el árbol; es el modelo exportado. Los errores se expresan en m³/mes. El ajuste alto es compatible con un dataset de reglas sintéticas conocidas, pero no demuestra desempeño sobre datos reales. La fórmula de generación tiene productos y crecimiento compuesto: no es estrictamente lineal en todas las entradas. Para profundizar el análisis entre modelos se recomienda a futuro evaluar residuos, errores por tipo de zona y una referencia sencilla.
+**Selección del modelo:**
+La Regresión Lineal sin variables espaciales obtuvo de forma consistente el menor error absoluto medio (MAE) y cuadrático (RMSE), con un coeficiente $R^2$ superior al 99 %. Por este motivo se seleccionó para reentrenarse con la totalidad del conjunto de entrenamiento y exportarse a `backend/models/modelo_consumo.joblib`.
+
+**Evaluación final sobre el conjunto de test reservado (20 %):**
+Al evaluar el modelo seleccionado una única vez sobre las 120 observaciones no vistas de test, se obtuvieron las siguientes métricas de generalización:
+- **MAE:** $130.11\,\text{m}^3/\text{mes}$
+- **RMSE:** $172.14\,\text{m}^3/\text{mes}$
+- **R²:** $0.9940$
+- **MAPE (Error porcentual absoluto medio):** $3.57\,\%$
+
+**Análisis detallado de errores y residuos:**
+Para analizar dónde y por qué se producen las discrepancias predictivas, se desglosó el error sobre el conjunto de test por categoría de barrio (`tipo_zona`):
+
+| Tipo de Zona | Muestras ($N$) | Consumo Promedio | MAE (m³/mes) | RMSE (m³/mes) | MAPE (%) | R² |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Residencial** | 82 (68.3 %) | 3557.7 m³/mes | 106.83 | 133.63 | 3.79 % | 0.9885 |
+| **Comercial** | 28 (23.3 %) | 5201.4 m³/mes | 128.09 | 157.71 | 2.62 % | 0.9943 |
+| **Industrial** | 10 (8.3 %) | 8637.4 m³/mes | 326.67 | 373.51 | 4.48 % | 0.9840 |
+
+*Interpretación de los errores:*
+1. **Magnitud de escala vs error relativo:** El error absoluto medio en zonas industriales ($326.67\,\text{m}^3/\text{mes}$) es aproximadamente el triple que en zonas residenciales ($106.83\,\text{m}^3/\text{mes}$). Esto no se debe a un peor ajuste del modelo, sino a la diferencia de escala de caudal: una zona industrial consume en promedio más de $8600\,\text{m}^3/\text{mes}$ (por el factor multiplicador de 2.1), frente a $\sim 3500\,\text{m}^3/\text{mes}$ de una residencial. Cuando se analiza el error relativo medio porcentual (MAPE), el comportamiento es homogéneo y robusto en todas las categorías, manteniéndose entre el $2.6\,\%$ y el $4.5\,\%$.
+2. **Distribución muestral:** La cantidad de casos de prueba refleja fielmente la distribución sintética de la población ($65\,\%$ residencial, $25\,\%$ comercial, $10\,\%$ industrial).
+3. **Muestra de casos reales vs predichos:**
+   - Nodo `H0182` (Residencial): Real = $1896.35\,\text{m}^3$, Predicho = $1885.44\,\text{m}^3$ (Error: $10.91\,\text{m}^3$ / $0.6\,\%$).
+   - Nodo `H0566` (Residencial): Real = $4518.64\,\text{m}^3$, Predicho = $4484.35\,\text{m}^3$ (Error: $34.29\,\text{m}^3$ / $0.8\,\%$).
+   - Nodo `H0285` (Comercial): Real = $6934.56\,\text{m}^3$, Predicho = $7118.93\,\text{m}^3$ (Error: $184.37\,\text{m}^3$ / $2.7\,\%$).
+   - Nodo `H0078` (Comercial): Real = $7342.12\,\text{m}^3$, Predicho = $7542.74\,\text{m}^3$ (Error: $200.62\,\text{m}^3$ / $2.7\,\%$).
+   - Nodo `H0111` (Comercial): Real = $2306.38\,\text{m}^3$, Predicho = $2127.37\,\text{m}^3$ (Error: $179.01\,\text{m}^3$ / $7.8\,\%$).
+
+Todos los artefactos resultantes (modelo entrenado y reporte estructurado en JSON con comparativas de validación y desglose por zonas) se encuentran sincronizados y persistidos en `backend/models/`.
 
 ## 4. Algoritmos de grafos
 

@@ -1,5 +1,125 @@
 {
-  "mae": 131.28,
-  "rmse": 172.97,
-  "r2": 0.9939
+  "mae": 130.11,
+  "rmse": 172.14,
+  "r2": 0.994,
+  "mape": 3.57,
+  "modelo_seleccionado": "Regresión Lineal (sin variables espaciales)",
+  "features_utilizadas": [
+    "poblacion",
+    "consumo_historico_mensual",
+    "crecimiento_poblacional_estimado",
+    "tipo_zona_industrial",
+    "tipo_zona_residencial"
+  ],
+  "comparacion_modelos_cv": {
+    "Sin variables espaciales": {
+      "Regresión Lineal": {
+        "mae_cv": 141.8,
+        "rmse_cv": 193.86,
+        "r2_cv": 0.993
+      },
+      "Árbol de Decisión": {
+        "mae_cv": 186.66,
+        "rmse_cv": 288.42,
+        "r2_cv": 0.9846
+      }
+    },
+    "Con variables espaciales": {
+      "Regresión Lineal": {
+        "mae_cv": 142.65,
+        "rmse_cv": 194.68,
+        "r2_cv": 0.993
+      },
+      "Árbol de Decisión": {
+        "mae_cv": 194.37,
+        "rmse_cv": 296.84,
+        "r2_cv": 0.9837
+      }
+    }
+  },
+  "desglose_por_zona": {
+    "comercial": {
+      "n_muestras": 28,
+      "consumo_promedio": 5201.42,
+      "mae": 128.09,
+      "rmse": 157.71,
+      "mse": 24872.62,
+      "r2": 0.9943,
+      "mape": 2.62
+    },
+    "industrial": {
+      "n_muestras": 10,
+      "consumo_promedio": 8637.42,
+      "mae": 326.67,
+      "rmse": 373.51,
+      "mse": 139511.8,
+      "r2": 0.984,
+      "mape": 4.48
+    },
+    "residencial": {
+      "n_muestras": 82,
+      "consumo_promedio": 3557.71,
+      "mae": 106.83,
+      "rmse": 133.63,
+      "mse": 17855.7,
+      "r2": 0.9885,
+      "mape": 3.79
+    }
+  },
+  "muestra_predicciones": [
+    {
+      "nodo_id": "H0111",
+      "tipo_zona": "comercial",
+      "consumo_real": 2306.38,
+      "consumo_predicho": 2127.37,
+      "residuo": 179.01,
+      "error_absoluto": 179.01,
+      "error_porcentual": 7.76
+    },
+    {
+      "nodo_id": "H0420",
+      "tipo_zona": "residencial",
+      "consumo_real": 2967.02,
+      "consumo_predicho": 3204.88,
+      "residuo": -237.86,
+      "error_absoluto": 237.86,
+      "error_porcentual": 8.02
+    },
+    {
+      "nodo_id": "H0566",
+      "tipo_zona": "residencial",
+      "consumo_real": 4518.64,
+      "consumo_predicho": 4484.35,
+      "residuo": 34.29,
+      "error_absoluto": 34.29,
+      "error_porcentual": 0.76
+    },
+    {
+      "nodo_id": "H0078",
+      "tipo_zona": "comercial",
+      "consumo_real": 7342.12,
+      "consumo_predicho": 7542.74,
+      "residuo": -200.62,
+      "error_absoluto": 200.62,
+      "error_porcentual": 2.73
+    },
+    {
+      "nodo_id": "H0182",
+      "tipo_zona": "residencial",
+      "consumo_real": 1896.35,
+      "consumo_predicho": 1885.44,
+      "residuo": 10.91,
+      "error_absoluto": 10.91,
+      "error_porcentual": 0.58
+    },
+    {
+      "nodo_id": "H0285",
+      "tipo_zona": "comercial",
+      "consumo_real": 6934.56,
+      "consumo_predicho": 7118.93,
+      "residuo": -184.37,
+      "error_absoluto": 184.37,
+      "error_porcentual": 2.66
+    }
+  ]
 }

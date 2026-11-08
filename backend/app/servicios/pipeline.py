@@ -30,12 +30,15 @@ def ejecutar_simulacion(escenario_crecimiento: float):
     # 5. Balance y resumen de capacidad
     demanda_total = sum(demandas_diarias.values())
     caudal_abastecido = min(abastecido, demanda_total)
-    deficit = max(0.0, demanda_total - caudal_abastecido)
+    
+    dem_red = round(demanda_total, 2)
+    aba_red = round(caudal_abastecido, 2)
+    def_red = round(max(0.0, dem_red - aba_red), 2)
     
     resumen_capacidad = {
-        "demanda_total_m3_dia": round(demanda_total, 2),
-        "caudal_abastecido_m3_dia": round(caudal_abastecido, 2),
-        "deficit_m3_dia": round(deficit, 2)
+        "demanda_total_m3_dia": dem_red,
+        "caudal_abastecido_m3_dia": aba_red,
+        "deficit_m3_dia": def_red
     }
     
     # 6. Preparación de la lista de todos los nodos (Barrios + PLANTA)
