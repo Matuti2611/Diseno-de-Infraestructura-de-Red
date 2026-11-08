@@ -8,7 +8,7 @@ TP de una cooperativa de agua: dataset sintético, predicción de demanda a cinc
 
 ## Estado y alcance
 
-Se están agrupando cambios autorizados en commits locales. El usuario realiza el push. Hay otros grupos preparados en la copia de trabajo: entorno reproducible, efectos frontend y documentación de cierre. Este primer grupo registra solo las correcciones backend y sus regresiones; los grupos restantes no se deben considerar incluidos en este commit.
+Se están agrupando cambios autorizados en commits locales. El usuario realiza el push. Hay otros grupos preparados en la copia de trabajo: entorno reproducible, efectos frontend y documentación de cierre. Las correcciones backend ya están registradas. Este grupo agrega versiones y configuración de despliegue; efectos y documentación de cierre quedan para los grupos siguientes.
 
 No hacer push, publicar servicios ni ampliar el diseño sin la autorización correspondiente. La documentación no lleva fechas exactas ni hashes. Los errores y sus soluciones se documentan en la sección de IA del informe, sin atribución personal.
 
@@ -39,6 +39,14 @@ El escenario multiplica la tasa anual de crecimiento poblacional; no incrementa 
 ## Pruebas
 
 22 pruebas backend aprobadas: inferencia estable por categorías, métricas inválidas/ausentes, error controlado de topología, MST de costo conocido e invariantes de flujo/pipeline. También se verificó HTTP local con métricas ausentes, 16 caudales y balance, predicción individual y rechazo de categoría inválida. No atribuir esos cambios locales a Render hasta publicarlos.
+
+## Entorno y despliegue
+
+`.python-version` fija Python 3.12.10 y `backend/requirements.txt` fija dependencias directas/transitivas compatibles con scikit-learn 1.9.1, versión del modelo. En Render conservar raíz del repositorio, build `pip install -r backend/requirements.txt` y arranque `uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`. Si existe PYTHON_VERSION, debe coincidir.
+
+Frontend: engines Node 24.x, `.nvmrc` con 24.20.0 y lockfile sin actualización de paquetes. `frontend/vercel.json` configura Vite, instalación `npm ci`, build `npm run build` y salida dist. Importar con raíz frontend y `VITE_API_URL=https://infraestructura-red-api.onrender.com`. No se publicó el frontend.
+
+Una copia separada con entornos nuevos pasó instalación, pip check, 22 tests backend, las 33 pruebas frontend anteriores a los efectos, lint y build con TypeScript. npm usó caché local. Falta probar otra computadora. No equivale a verificación en Linux.
 
 ## Próximo paso
 
