@@ -1,6 +1,6 @@
 # Informe — Diseño de infraestructura de red de agua
 
-> Estado: borrador de trabajo. Completar cada sección a medida que se implementa y evalúa el proyecto.
+> Informe técnico del caso implementado. Los resultados locales están comprobados; el estado de publicación se distingue de la implementación.
 
 Referencia de requisitos: `enunciado.pdf`, consignas generales y entregables en páginas 1–4 y trabajo «Diseño de infraestructura de red» en páginas 7–8. Ver [estado de cumplimiento y pendientes](docs/revision-consigna.md). Las descripciones siguientes distinguen implementación, resultados reportados y verificaciones pendientes.
 
@@ -24,7 +24,7 @@ Los datos iniciales son **sintéticos**. `backend/app/data/generar_dataset.py` p
 
 La población se sortea entre 200 y 1200 personas; el tipo de zona es residencial, comercial o industrial. La tasa anual de crecimiento se sortea entre 0,5 % y 4 %. Para construir el consumo mensual actual se usa una base de 0,15 m³ por persona y día, multiplicada por 30 días y por factores de tipo de zona (1; 1,45; 2,1), con variación uniforme de ±12 %. El consumo futuro se genera como consumo actual × (1 + crecimiento anual)^5, con variación adicional de ±5 %. Estos parámetros son supuestos didácticos, no mediciones de una cooperativa.
 
-El conjunto de prueba permitirá medir cuánto aprende un modelo de **estas reglas simuladas**. Sus métricas no demostrarán precisión sobre consumo real.
+El conjunto de prueba mide cuánto aprende el modelo de **estas reglas simuladas**. Sus métricas no demuestran precisión sobre consumo real.
 
 Este procedimiento sigue la alternativa de dataset sintético admitida por el enunciado (página 2): se entrega el script generador, se declaran las dependencias entre variables y se fija una semilla para reproducir el caso. Las columnas propuestas en la página 7 están en `historial_consumo.csv`; `zonas.csv` omite intencionalmente `consumo_futuro`, porque contiene las zonas para las que hay que predecirlo. `fila` y `columna` son columnas adicionales para construir la cuadrícula; las tablas del enunciado permiten agregar campos.
 
@@ -36,23 +36,28 @@ Cada arista candidata debe indicar sus nodos extremos, costo de construcción y 
 
 `backend/app/data/generar_grafo.py` conecta cada barrio con sus vecinos horizontales y verticales y agrega dos enlaces posibles desde la planta: 26 aristas en total. El grafo candidato es conexo. La distancia se aproxima a partir de las coordenadas; el costo es distancia en metros × 10 × un factor de dificultad entre 0,9 y 1,25. Los enlaces de la planta reciben una capacidad de 2500 m³/día; el resto toma valores sintéticos de 750, 1200, 2000 o 3000 m³/día. Estas capacidades sirven para ensayar el algoritmo y no representan cálculos hidráulicos.
 
-## 3. Modelo predictivo
+### Casos de capacidades
 
 El caso de capacidades se elige independientemente del modelo: Original conserva las capacidades iniciales; Progresivo mantiene conexiones, distancias y costos y asigna 2195 m³/día a PLANTA–Z01 y 2500 a los demás candidatos. Se reproduce con `python backend/app/data/generar_caso_progresivo.py`, que no sobrescribe la entrada. Es una regla sintética explícita para mostrar una transición de cobertura con los datos/modelo actuales; no representa un dimensionamiento hidráulico real ni modifica capacidades para forzar el resultado de cada petición. Al cambiar semilla o modelo debe repetirse su validación.
+
+## 3. Modelo predictivo
 
 **Objetivo:** Proyectar el consumo futuro de cada zona a partir de sus características disponibles al momento de predecir.
 
 **Preparación y selección de variables (Features):** 
 El dataset histórico cuenta con variables demográficas (`poblacion`), de consumo (`consumo_historico_mensual`), de proyección (`crecimiento_poblacional_estimado`), categóricas (`tipo_zona`) y espaciales (`latitud`, `longitud`, `fila`, `columna`).
-- **One-hot encoding:** `tipo_zona` se codifica en variables binarias (*dummies*) descartando la primera categoría de referencia para evitar colinealidad.
-- **Justificación de variables espaciales:** Se contrastó experimentalmente en validación cruzada el rendimiento del modelo con y sin coordenadas espaciales. La fórmula generadora del consumo depende de la población, el tipo de zona y el crecimiento anual, mientras que las coordenadas y posiciones de cuadrícula fueron diseñadas exclusivamente para la geometría física de la red y las distancias de cañería. Los resultados demostraron que excluir las variables espaciales reduce el error medio (el MAE en validación cruzada bajó de 142.65 a 141.80 m³/mes en la regresión lineal, y de 194.37 a 186.66 m³/mes en el árbol de decisión). Al quitarlas se simplifica el modelo, se reduce la dimensionalidad y se evita que el estimador aprenda correlaciones espaciales espurias producto del ruido sintético.
+
+- **One-hot encoding:** durante entrenamiento se descarta una categoría de referencia. En inferencia se generan todas las categorías presentes y se alinean con las columnas aprendidas, evitando que el significado cambie al consultar un único barrio.
+- **Justificación de variables espaciales:** Se contrastó experimentalmente en validación cruzada el rendimiento del modelo con y sin coordenadas espaciales. La fórmula generadora del consumo depende de la población, el tipo de zona y el crecimiento anual, mientras que las coordenadas y posiciones de cuadrícula fueron diseñadas exclusivamente para la geometría física de la red y las distancias de cañería. En esta comparación, excluir las variables espaciales redujo el error medio (el MAE en validación cruzada bajó de 142.65 a 141.80 m³/mes en la regresión lineal, y de 194.37 a 186.66 m³/mes en el árbol de decisión). Su exclusión simplifica el modelo y coincide con las reglas generadoras. La pequeña diferencia observada en CV no demuestra por sí sola que exista sobreajuste.
 
 **Metodología de entrenamiento y validación:**
 Para no utilizar el conjunto de prueba como criterio de decisión ("examen final para elegir modelo"), se implementó una partición estricta en dos etapas:
-1. **Partición inicial 80/20:** El dataset de 600 observaciones se dividió aleatoriamente con semilla `42`, reservando el 20 % (120 observaciones) exclusivamente para la evaluación final inalterada.
+
+1. **Partición inicial 80/20:** El dataset de 600 observaciones se dividió aleatoriamente con semilla `42`, reservando el 20 % (120 observaciones) para evaluación, sin usarlo en el ajuste ni en la CV del script actual.
 2. **Validación cruzada K-Fold ($K=5$) en entrenamiento:** Dentro del 80 % de entrenamiento (480 observaciones), se compararon los modelos mediante validación cruzada con 5 pliegues para seleccionar la mejor arquitectura y validar la selección de features.
 
 **Comparación de modelos en validación cruzada (5-Fold sobre el 80 % de Train):**
+
 | Modelo y configuración | MAE CV (m³/mes) | RMSE CV (m³/mes) | R² CV |
 | :--- | :--- | :--- | :--- |
 | **Regresión Lineal (sin espaciales)** | **141.80** | **193.86** | **0.9930** |
@@ -61,10 +66,11 @@ Para no utilizar el conjunto de prueba como criterio de decisión ("examen final
 | Árbol de Decisión (con espaciales) | 194.37 | 296.84 | 0.9837 |
 
 **Selección del modelo:**
-La Regresión Lineal sin variables espaciales obtuvo de forma consistente el menor error absoluto medio (MAE) y cuadrático (RMSE), con un coeficiente $R^2$ superior al 99 %. Por este motivo se seleccionó para reentrenarse con la totalidad del conjunto de entrenamiento y exportarse a `backend/models/modelo_consumo.joblib`.
+La regresión lineal sin variables espaciales obtuvo el menor MAE y RMSE medios de CV, con R² medio 0.9930. Se eligió esa configuración y se ajustó en el 80 % de entrenamiento para exportarla. El script fija explícitamente esta elección; no implementa búsqueda automática del ganador para otros datasets. R² es un coeficiente de determinación, no una exactitud de clasificación.
 
 **Evaluación final sobre el conjunto de test reservado (20 %):**
-Al evaluar el modelo seleccionado una única vez sobre las 120 observaciones no vistas de test, se obtuvieron las siguientes métricas de generalización:
+El modelo ajustado se evaluó sobre las 120 observaciones de test. La partición se conservó durante el desarrollo y ya se había consultado en versiones anteriores: estos resultados son una evaluación interna del caso sintético, no una validación externa ciega.
+
 - **MAE:** $130.11\,\text{m}^3/\text{mes}$
 - **RMSE:** $172.14\,\text{m}^3/\text{mes}$
 - **R²:** $0.9940$
@@ -80,9 +86,10 @@ Para analizar dónde y por qué se producen las discrepancias predictivas, se de
 | **Industrial** | 10 (8.3 %) | 8637.4 m³/mes | 326.67 | 373.51 | 4.48 % | 0.9840 |
 
 *Interpretación de los errores:*
-1. **Magnitud de escala vs error relativo:** El error absoluto medio en zonas industriales ($326.67\,\text{m}^3/\text{mes}$) es aproximadamente el triple que en zonas residenciales ($106.83\,\text{m}^3/\text{mes}$). Esto no se debe a un peor ajuste del modelo, sino a la diferencia de escala de caudal: una zona industrial consume en promedio más de $8600\,\text{m}^3/\text{mes}$ (por el factor multiplicador de 2.1), frente a $\sim 3500\,\text{m}^3/\text{mes}$ de una residencial. Cuando se analiza el error relativo medio porcentual (MAPE), el comportamiento es homogéneo y robusto en todas las categorías, manteniéndose entre el $2.6\,\%$ y el $4.5\,\%$.
-2. **Distribución muestral:** La cantidad de casos de prueba refleja fielmente la distribución sintética de la población ($65\,\%$ residencial, $25\,\%$ comercial, $10\,\%$ industrial).
-3. **Muestra de casos reales vs predichos:**
+
+1. **Escala y error relativo:** la industria tiene mayor error absoluto (326.67 frente a 106.83 m³/mes residencial) y también mayor MAPE (4.48 % frente a 3.79 %). La escala de consumo explica parte de la diferencia, pero no permite concluir que ambos ajustes sean equivalentes. Solo hay diez muestras industriales de test. MAPE es un promedio: existen observaciones con errores individuales mayores al 5 %.
+2. **Distribución muestral:** el test contiene 82 casos residenciales, 28 comerciales y 10 industriales. Son proporciones próximas a los pesos de generación 65/25/10, no una reproducción exacta ni una muestra de una población real.
+3. **Ejemplos de objetivo sintético frente a predicción:** son los primeros casos del test en el orden de la partición, no una muestra estadísticamente representativa. «Real» en las cifras siguientes significa etiqueta sintética observada, no medición de una cooperativa.
    - Nodo `H0182` (Residencial): Real = $1896.35\,\text{m}^3$, Predicho = $1885.44\,\text{m}^3$ (Error: $10.91\,\text{m}^3$ / $0.6\,\%$).
    - Nodo `H0566` (Residencial): Real = $4518.64\,\text{m}^3$, Predicho = $4484.35\,\text{m}^3$ (Error: $34.29\,\text{m}^3$ / $0.8\,\%$).
    - Nodo `H0285` (Comercial): Real = $6934.56\,\text{m}^3$, Predicho = $7118.93\,\text{m}^3$ (Error: $184.37\,\text{m}^3$ / $2.7\,\%$).
@@ -104,6 +111,7 @@ El objetivo es comparar la demanda proyectada con el máximo caudal que puede tr
 **Implementación manual:** Edmonds–Karp en `backend/app/grafos/flujo.py`. Usa BFS para hallar caminos de aumento más cortos en cantidad de aristas y actualiza el flujo en ambos sentidos de la red residual. El total abastecido se compara con NetworkX con tolerancia absoluta de 0.1; no se compara la asignación por arista. Las soluciones máximas pueden distribuir el agua de forma distinta. Una comprobación adicional de revisión que requiere cancelar un flujo previo obtuvo el máximo esperado de 2.
 
 **Representación de la red y compatibilización de unidades:**
+
 1.  **Fuente y Sumidero:** Se definió el nodo `PLANTA` como el nodo fuente (source). Para representar la demanda simultánea de todos los barrios, se agregó un "súper sumidero" (super-sink) ficticio al grafo. Cada barrio se conectó a este sumidero general con una arista dirigida cuya capacidad máxima es exactamente su demanda predicha.
 2.  **Unidades:** Dado que la capacidad máxima de las conexiones candidatas está expresada en m³/día, la proyección de consumo futuro mensual de los nodos devuelta por el modelo se dividió por 30 para obtener una demanda diaria y poder operar de forma coherente en el grafo.
 
@@ -134,43 +142,30 @@ El caso Progresivo cubrió Base (2167.62 m³/día) y +10 % (2192.42 m³/día, en
 
 ## 6. Pruebas y resultados
 
-**Ejecución de la Red de Menor Costo reportada por Matías:**
-Al ejecutar el algoritmo sobre las 26 aristas candidatas generadas, el sistema seleccionó exitosamente 16 conexiones (el mínimo necesario para conectar la planta y los 16 barrios sin formar ciclos). El costo total proyectado para esta obra fue de 73066.05 unidades.
+**Backend: 28 pruebas aprobadas**, con `.venv\Scripts\python.exe -m unittest discover -s backend/tests -v`. Incluyen generación reproducible, inferencia individual/lotes, métricas ausentes o inválidas, topología desconectada, Kruskal de costo conocido, capacidades y conservación de flujo, y recorrido ASGI completo de los seis casos/escenarios. Un ejemplo dirigido requiere cancelar un flujo previo para alcanzar máximo 2; protege el uso correcto de la red residual. Las métricas de ML, su desglose y el signo de los residuos se comprueban con valores resueltos a mano.
 
-**Registro histórico de diagnóstico reportado por Matías, distinto del caso actual:**
-Se realizó una simulación base incrementando artificialmente el consumo histórico en un 20% para forzar el comportamiento de la red. Los resultados demostraron que el sistema detecta correctamente los cuellos de botella:
-- **Agua requerida:** 2351.52 m³/día.
-- **Agua abastecida (Flujo Máximo):** 1441.97 m³/día.
-- **Diagnóstico:** Déficit hídrico. La red de menor costo no posee la capacidad suficiente para esta demanda proyectada.
-- **Tramos Críticos:** Se reportaron 2 aristas saturadas al 100% de su capacidad: `Z01 <-> Z05` (1200 m³/día) y `Z05 <-> Z06` (750 m³/día).
+**Frontend: 43 pruebas aprobadas**, más lint, TypeScript y build. Comprueban contrato, valores inválidos, balances, errores HTTP/timeout, escenarios/casos fuera de orden, cancelación, reintento, comparación sin tablas parciales, ausencia frente a cero, interacción por teclado y alternativa de tarjeta sin WebGL. Las pruebas frontend no prueban por sí solas los algoritmos del backend.
 
-Esas cifras se conservan como registro de la ejecución descrita por Matías, con consumo alterado; no se reprodujeron en esta revisión ni son el escenario HTTP base actual. Los resultados actuales se presentan más abajo.
+El ejemplo controlado PLANTA–A=70/A–B=35 tiene demanda A=20/B=30 y suministro total 50. Con demandas A=26/B=39 abastece A=26/B=35 y deja déficit 4. Así se distingue el agua en tránsito por una cañería del consumo de cada barrio. Es un caso exclusivo de pruebas, no una predicción fabricada del modelo.
 
-**Verificación del backend:** 25 pruebas aprobadas mediante `.venv\Scripts\python.exe -m unittest discover -s backend/tests -v`. Conservan datos, Union-Find, Kruskal productivo, flujo conocido, conservación y regresiones. Las tres nuevas recorren ASGI/FastAPI completo con seis combinaciones, validación 422, coherencia de candidatos/MST/caso, suministro/déficit por barrio y reproducción del CSV sin alterar el original. El ejemplo conocido verifica A=20/B=30 abastecidos con 50 de tránsito por PLANTA–A, y A=26/B=35 abastecidos con déficit 4 en B. No se impone una asignación única en la red grande, porque máximo flujo no garantiza equidad.
+Los resultados actuales de HTTP local, en m³/día, son:
 
-Se reprodujeron en memoria las métricas de ambos modelos con los datos y split declarados, sin sobrescribir el modelo ni los JSON versionados; coinciden con la tabla de la sección 3. La instalación nueva del backend en `.venv` y la ejecución de la suite pasaron con Python 3.12.10 y scikit-learn 1.9.1.
+| Caso | Crecimiento | Demanda | Suministro | Déficit |
+| --- | --- | --- | --- | --- |
+| Original | Base | 2167.62 | 1435.89 | 731.73 |
+| Original | +10 % | 2192.42 | 1440.39 | 752.03 |
+| Original | +30 % | 2242.09 | 1449.40 | 792.69 |
+| Progresivo | Base | 2167.62 | 2167.62 | 0 |
+| Progresivo | +10 % | 2192.42 | 2192.42 | 0 |
+| Progresivo | +30 % | 2242.09 | 2195.00 | 47.09 |
 
-**Verificación del frontend e integración:** 43 pruebas aprobadas de contrato, cliente, interacción y efectos. Las seis nuevas verifican balances por barrio inválidos, API que ignora el caso o responde otro crecimiento, detalle/comparación, cancelación, respuestas tardías y fallo parcial sin tabla inventada. Pasaron lint y build con TypeScript estricto. La comparación usa respuestas controladas en tests; también se comprobó el recorrido con API real local en Edge: 17 nodos, 16 barrios, comparación y déficit, sin excepciones ni desbordamiento a 390 px. Estas pruebas de presentación no sustituyen las matemáticas del backend.
+El costo del MST es 73066.05 en ambos casos: solo cambian capacidades. La entrada progresiva llega aproximadamente al 99.9 % con +10 % y se satura con +30 %. La asignación máxima por barrio puede variar; pequeñas diferencias de centésimas pueden deberse al reparto y redondeo. No se exige un reparto único ni equitativo.
 
-Un caso mínimo exclusivo de tests fija demandas A=20/B=30 y obtiene suministro 50/déficit 0; otra respuesta fija A=26/B=39 y suministro 61/déficit 4 sobre capacidades PLANTA–A=70/A–B=35. La interfaz presenta ambos balances y cambia el diagnóstico al recibirlos. Son respuestas controladas con resultado conocido; no son predicciones del modelo ni pruebas ejecutadas contra el servicio publicado.
+Edge con API local comprobó 17 nodos, 16 barrios, caudales, comparación y transición a déficit; a 390 px no hay desbordamiento de página. Una desconexión conserva el resultado identificado y permite recuperarlo al reintentar. Se probaron seis peticiones HTTP 200 y rechazo 422 de caso desconocido. No se atribuyen estos resultados al despliegue público mientras no se verifique su actualización.
 
-En Edge con Render real se comprobaron 17 nodos, 26 candidatos, 16 tendidos y 16 caudales, sin tramos Sin dato. La pantalla muestra déficit en los tres escenarios. A 390 px no se observó desbordamiento horizontal de la página. Se renovaron las capturas con el contrato completo.
+Capturas: [tendidos](docs/capturas/tendidos-escritorio.png), [comparación progresiva local](docs/capturas/caso-progresivo-comparacion.png), [controles móviles locales](docs/capturas/caso-progresivo-movil.png). La captura de tendidos corresponde a la integración anterior con Render, con la misma geometría; las nuevas identifican el caso local.
 
-| Escenario de tasa poblacional | Demanda m³/día | Abastecido m³/día | Déficit m³/día |
-| --- | --- | --- | --- |
-| Base | 2167.74 | 1435.18 | 732.56 |
-| +10 % | 2192.58 | 1439.69 | 752.89 |
-| +30 % | 2242.26 | 1448.71 | 793.55 |
-
-Los tres POST respondieron HTTP 200 con contrato completo. En base se observó una arista saturada; una asignación de flujo distinta a la histórica puede ser igualmente máxima. No se interpreta que un tramo con flujo cero esté sin información ni que el objetivo garantice reparto equitativo entre barrios.
-
-Se fijaron versiones de dependencias Python compatibles con el modelo y Node 24.x con lockfile para frontend. En una copia separada, con `.venv` y `node_modules` nuevos, pasaron instalación, `pip check`, 22 pruebas backend, 33 frontend, lint y build con TypeScript. npm usó la caché disponible; los permisos adecuados resolvieron el bloqueo de la comprobación anterior. La integración con el contrato completo ya se verificó en la página local y Render; falta repetir el arranque y recorrido desde otra computadora y publicar el frontend previsto.
-
-Capturas de esa revisión, sin resultados fabricados:
-
-- [Tendidos y detalle](docs/capturas/tendidos-escritorio.png).
-- [Capacidad, caudales y déficit real](docs/capturas/capacidad-escritorio.png).
-- [Gráfico en móvil](docs/capturas/red-movil.png).
+La instalación limpia previa fue comprobada con versiones fijadas y entornos nuevos. El README permite levantar la demo desde otro entorno. Probar otra computadora sigue siendo recomendable, pero el enunciado no exige otro dataset ni un proveedor de hosting concreto.
 
 ## 7. Uso de inteligencia artificial
 
@@ -222,13 +217,14 @@ Durante el desarrollo asistido por IA detectamos propuestas de código y pruebas
 | Error detectado | Cómo lo detectamos | Cómo lo resolvimos y verificamos |
 | --- | --- | --- |
 | Codificación categórica dependiente del lote | La misma zona industrial daba 10113.16 m³/mes individualmente y 10128.63 dentro de las 16 zonas. `drop_first=True` eliminaba la única categoría de una consulta individual. | En inferencia generamos las dummies sin eliminar categorías y alineamos con las columnas del modelo entrenado. Rechazamos tipos de zona fuera de los admitidos en el endpoint. Las pruebas comprueban igualdad entre predicciones individuales, lotes por tipo y lote completo para las tres categorías; el endpoint también conserva el resultado. No fue necesario reentrenar el modelo. |
-| Prueba nueva de carga bloqueada por el reloj simulado | La prueba del loader agotó su tiempo por combinar el reloj simulado con la interacción asíncrona. TypeScript también detectó una opción de consulta no admitida en el test. | Se retiró la opción inválida y se separó la activación del evento del avance explícito del reloj. La prueba comprueba reinicio del contador, descarte de respuestas antiguas y retiro del loader ante error/éxito, manteniendo las aserciones de comportamiento. Pasaron las 37 pruebas frontend, lint, TypeScript y build. |
+| Prueba nueva de carga bloqueada por el reloj simulado | La prueba del loader agotó su tiempo por combinar el reloj simulado con la interacción asíncrona. TypeScript también detectó una opción de consulta no admitida en el test. | Se retiró la opción inválida y se separó la activación del evento del avance explícito del reloj. La prueba comprueba reinicio del contador, descarte de respuestas antiguas y retiro del loader ante error/éxito, manteniendo las aserciones de comportamiento. Se verificó con pruebas de comportamiento, lint, TypeScript y build. |
 | Métricas fijas sin archivo de evaluación válido | Simulamos archivo ausente, JSON roto, campos incompletos y valores no finitos; la propuesta anterior devolvía cifras constantes o inválidas. | Quitamos los valores de respaldo y centralizamos lectura/validación del archivo real. Si no hay métricas válidas se devuelve `null`; la simulación sigue disponible y la página informa su ausencia. Se probaron ambas rutas, datos inválidos y un archivo válido con R² negativo. |
 | Una prueba repetía Kruskal en vez de comprobar la función del proyecto | Al leer el test vimos otro bucle de ordenamiento y Union-Find dentro de la prueba: podía pasar aunque fallara la función utilizada por la API. | Reemplazamos ese bucle por un CSV temporal y una llamada a `calcular_red_menor_costo`. La expectativa independiente sigue siendo costo 6, tres aristas y árbol conexo sin ciclos. |
-| Una prueba nueva trataba el orden de los extremos como dirección de una cañería | Falló la comparación de candidatos/MST porque Z03–Z04 y Z04–Z03 aparecían en distinto orden, aunque representan la misma conexión no dirigida. | Se normalizaron los extremos como conjunto y se mantuvieron comprobaciones independientes de costo/capacidad y del árbol. Las seis combinaciones por ASGI y las 25 pruebas backend pasaron. No se alteró el grafo para satisfacer la prueba. |
+| Una prueba nueva trataba el orden de los extremos como dirección de una cañería | Falló la comparación de candidatos/MST porque Z03–Z04 y Z04–Z03 aparecían en distinto orden, aunque representan la misma conexión no dirigida. | Se normalizaron los extremos como conjunto y se mantuvieron comprobaciones independientes de costo/capacidad y del árbol. Las seis combinaciones por ASGI y la suite backend pasaron. No se alteró el grafo para satisfacer la prueba. |
+| Documentación que afirmaba más de lo comprobado | Al contrastarla con el código aparecían un cuaderno vacío descrito como EDA, conteos viejos, resultados de distintas versiones y selección de modelo presentada como automática. | Se ordenaron guías e informe con el estado actual, se identificó la elección explícita del modelo y se separó implementación local de publicación. Se conservaron las cifras reproducidas y se precisaron los límites del análisis de errores. |
 | Una red desconectada se presentaba como resultado completo | Un caso con PLANTA–A y B–C devolvía dos componentes sin avisar que no se conectaban todos los nodos. | Kruskal ahora verifica conexión de todos los nodos, incluidos los declarados sin aristas, y rechaza redes vacías/desconectadas. Pipeline y consulta MST pasan los nodos esperados; la API informa indisponibilidad con HTTP 503. Se agregaron casos de regresión para cada situación. |
 
-Las pruebas de regresión reprodujeron los fallos antes de aplicar las correcciones. Después pasaron las **22 pruebas del backend**, incluyendo el test de Kruskal que ahora llama al código real. Los cambios se agrupan en commits locales por tema; el usuario realiza el push y todavía falta verificar las correcciones desplegadas. El estado de verificación está en [verificacion-proyecto.md](docs/verificacion-proyecto.md).
+Las pruebas de regresión reprodujeron los fallos antes de aplicar las correcciones y después pasaron. El estado actual está en [verificacion-proyecto.md](docs/verificacion-proyecto.md); registro local y publicación son estados diferentes.
 
 **Desacierto visual del frontend:**
 
@@ -242,7 +238,7 @@ La asistencia ayudó a pasar de archivos vacíos a una interfaz integrada, organ
 
 También fue necesario contrastar el texto generado con el código: la presencia de una llamada a NetworkX no demuestra una implementación propia del algoritmo pedido, y las métricas escritas en una respuesta no prueban que se haya reproducido la evaluación. La IA facilita construir y revisar, pero no elimina las pruebas ni la necesidad de explicar cada parte en la defensa.
 
-Después de quitar el indicador pasaron nuevamente las 22 pruebas del frontend, lint, TypeScript y build. Eso no garantiza ausencia de otros errores ni valida la matemática del backend. Se completaron las referencias de paleta, uso exploratorio de Figma y patrones del proyecto previo según la aclaración de Ciro. Antes de entregar falta revisar el registro de uso de IA del trabajo de Matías si hubo otras intervenciones.
+La suite actual de interfaz, lint, TypeScript y build pasó. Esto no garantiza ausencia de errores ni valida por sí solo la matemática del backend. Los aportes adicionales de IA de los integrantes se agregan solo si se confirman.
 
 ## 8. Limitaciones y posibles extensiones
 
@@ -252,14 +248,14 @@ Los efectos elegidos por Ciro se integraron sin alterar el cálculo de la red: H
 - Se usan promedios diarios obtenidos de un mes convencional de 30 días; no se modelan picos horarios, estacionalidad ni incertidumbre de las predicciones.
 - La red representa capacidades y conectividad, no una simulación hidráulica de presiones, pérdidas de carga, diámetros o bombas.
 - Se minimiza costo de conexión y luego se valida capacidad. El sistema todavía no propone ampliaciones ni optimiza simultáneamente costo y abastecimiento.
-- El contrato completo ya está publicado en Render y verificado desde la página local. La publicación del frontend sigue pendiente.
+- El contrato original fue verificado en Render; no se confirmó la publicación del último código de casos/barrios ni del frontend.
 - Se corrigieron localmente la inferencia por categorías, métricas de respaldo, test duplicado y control de desconexión; el detalle de error/detección/solución está en la sección de uso de IA. Falta publicar estas correcciones y repetir su validación por HTTP.
-- El entrenamiento actual separa comparación por validación cruzada y evaluación final, justifica features y desglosa errores. Falta ampliar sus pruebas específicas e incorporar una referencia simple al reporte reproducible. Las dependencias compatibles ya están fijadas; falta comprobar la instalación en otra computadora.
+- El entrenamiento actual usa CV en entrenamiento y evaluación separada, justifica features y desglosa errores. Métricas, grupos y residuos tienen pruebas de valores conocidos. La exportación permanece fijada a la configuración elegida para este caso; no se busca el mejor modelo para cualquier dataset. Otra computadora y una referencia adicional serían verificaciones útiles, no requisitos funcionales nuevos.
 - El flujo máximo prioriza cantidad total abastecida, sin restricciones de equidad. Un barrio puede recibir cero aunque la solución sea máxima; analizar reparto por zona sería una extensión.
 - Posibles extensiones: datos reales adaptados y citados, curvas horarias, comparación de escenarios, incertidumbre, alternativas para reforzar tramos y análisis de costos de ampliación.
 
 ## 9. Instalación y ejecución
 
-Las instrucciones están en [README.md](README.md), [frontend/README.md](frontend/README.md) y la [guía de instalación reproducible](docs/instalacion-reproducible.md). Las versiones están fijadas y se verificaron backend/frontend en una copia nueva, sus pruebas y compilación, además de la página local con Render. Falta comprobar el recorrido completo en otra computadora y completar la publicación prevista en Vercel; su configuración de build ya está preparada.
+Las instrucciones están en [README.md](README.md), [frontend/README.md](frontend/README.md) y la [guía de instalación reproducible](docs/instalacion-reproducible.md). Las versiones están fijadas y se comprobó instalación limpia en una copia separada, además de las pruebas y compilación actuales. La demo actual se verificó con API local; una prueba adicional en otra computadora sigue siendo recomendable. La publicación prevista en Vercel está preparada, sin confirmación de despliegue actual.
 
 El enunciado exige demo end-to-end e instrucciones reproducibles; no exige contratar servicios, un dominio, AWS Lambda ni publicar en un proveedor determinado. Vercel + Render es una decisión del grupo.

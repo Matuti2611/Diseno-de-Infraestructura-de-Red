@@ -10,7 +10,7 @@ Ciro trabaja en frontend y Matías en backend/ML/grafos. Ciro asumió y autoriz�
 
 ## Estado del repositorio y publicación
 
-La copia recibió el nuevo entrenamiento/evaluación de ML y el CSV progresivo de Matías; se preservaron. Las ampliaciones de casos/barrios ya se registraron en commits locales. El usuario autorizó registrar las correcciones y agregados finales de entrega: este grupo reúne las aclaraciones de API/evaluación, retiro de la supresión global de warnings y tres pruebas de valores conocidos; la documentación consolidada está preparada para el grupo siguiente. El push queda a su cargo. No se modificaron modelo ni CSV versionados. No se confirmó si GitHub tiene cambios posteriores a los recibidos; no repetir una consulta remota no autorizada por otro medio.
+La copia recibió el nuevo entrenamiento/evaluación de ML y el CSV progresivo de Matías; se preservaron. Las ampliaciones de casos/barrios y las correcciones finales de entrega se agrupan en commits locales de código/pruebas y documentación consolidada, como pidió el usuario. El cierre incluye aclaraciones de API/evaluación, retiro de la supresión global de warnings y tres pruebas de valores conocidos. El push queda a su cargo; no se publicó desde esta revisión. No se modificaron modelo ni CSV versionados. No se confirmó si GitHub tiene cambios posteriores a los recibidos; no repetir una consulta remota no autorizada por otro medio.
 
 Render ya alojaba la API y su contrato de planta/candidatos/16 caudales/balance fue verificado. La ampliación de casos y barrios solo está comprobada localmente: actualizar/verificar Render antes de declararla publicada. Frontend preparado para Vercel, publicación sin confirmar. El usuario realiza los push.
 
@@ -86,7 +86,7 @@ Si GitHub sigue siendo un repositorio de cuenta personal, Vercel exige que lo im
 
 ## Próximo paso
 
-1. Completar la agrupación autorizada con el informe y las guías consolidadas; el usuario realiza el push. La guía manual está en `casos-capacidad.md`.
+1. El usuario puede publicar los commits locales de cierre y confirmar el código de entrega en GitHub. La guía manual está en `casos-capacidad.md`.
 2. Actualizar/verificar API en Render y probar el frontend contra ella antes de publicarlo en Vercel; comprobar CORS, HTTPS e inactividad.
 3. Confirmar entrega final en GitHub y preparar demo/defensa. El README reproducible es obligatorio; una prueba adicional en otra computadora es recomendable y no un nuevo requisito.
 4. No hay funcionalidades obligatorias pendientes identificadas. Otro dataset, importador web, comparación automática de modelos y hosting público son opcionales; no ampliar el alcance para cerrar.

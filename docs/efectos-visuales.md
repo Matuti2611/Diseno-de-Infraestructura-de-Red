@@ -22,10 +22,10 @@ Se tradujeron etiquetas y anuncios del loader, se ocultó el reloj a lectores de
 
 ## Verificación
 
-- **37 pruebas frontend aprobadas**, más lint, TypeScript y build. Cuatro pruebas nuevas comprueban reinicio del contador y retiro ante error/éxito, respuestas antiguas ignoradas durante la espera, limpieza del intervalo, alternativa sin WebGL y navegación de ida/vuelta sin nuevas solicitudes.
+- **43 pruebas frontend aprobadas**, más lint, TypeScript y build. Cuatro pruebas de efectos comprueban reinicio del contador y retiro ante error/éxito, respuestas antiguas ignoradas durante la espera, limpieza del intervalo, alternativa sin WebGL y navegación de ida/vuelta sin nuevas solicitudes.
 - Edge en escritorio: textura lista, imagen local cargada, inclinación/reflejos y pausa funcionando. En móvil de 390 px: tarjeta de 308 px y sin desbordamiento horizontal. La preferencia de movimiento reducido dejó de modificar su transformación.
 - Al volver a Capacidad con Render real: 17 nodos, 16 caudales, tarjeta desmontada y loader retirado. Sin excepciones de JavaScript observadas.
-- Build: bundle principal ~263 kB / 82 kB gzip; vista de efectos separada ~20 kB / 7 kB gzip; imagen ~49 kB. No cambió el lockfile por estos efectos.
+- Build: bundle principal ~270 kB / 83 kB gzip; vista de efectos separada ~20 kB / 7 kB gzip; imagen ~49 kB. No cambió el lockfile por estos efectos.
 
 No se modificaron el backend, los datos, los resultados de ML o los algoritmos como parte de esta incorporación. Sigue pendiente publicar el frontend en Vercel y repetir la instalación en otra computadora.
 

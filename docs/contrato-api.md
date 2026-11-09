@@ -1,71 +1,62 @@
-# Contrato de API e integración de capacidad
+# Contrato de API y capacidad
 
-## Ampliación local: casos y abastecimiento por barrio
+Contrato actual implementado y probado localmente. La API pública de Render fue comprobada con una versión anterior; no se confirma que ya entregue las ampliaciones de casos y barrios. Reglas y resultados en [casos-capacidad.md](casos-capacidad.md).
 
-Implementada y comprobada contra API local, pendiente de publicación: la petición agrega `caso_red` (`original` por omisión o `progresivo`); la respuesta confirma caso y crecimiento. Los barrios agregan `caudal_abastecido_m3_dia` y `deficit_m3_dia`, obtenidos del enlace al supersumidero. PLANTA los devuelve como null. El resumen suma las cantidades publicadas por barrio; MST y candidatos corresponden al mismo caso. Reglas, JSON, invariantes y seis resultados en [casos-capacidad.md](casos-capacidad.md).
+## Petición
 
-El frontend incorpora selector, detalle/tabla por barrio y comparación de tres escenarios. Rechaza una respuesta que no confirme el caso progresivo para no confundirla con una API antigua que ignore el campo. La compatibilidad original sigue mostrando datos ausentes explícitamente.
-
-Estado: **implementado en backend y frontend y comprobado en Render**. La respuesta pública ya incluye planta, candidatos, 16 flujos y resumen. Se conserva compatibilidad del cliente con respuestas que omitan los campos opcionales. Los cierres pendientes están en `verificacion-proyecto.md`.
-
-Corrección local posterior: `metricas_ml` es objeto válido o `null` si su archivo está ausente/inválido; `GET /api/modelo/metricas` también devuelve null en ese caso. No hay cifras constantes de respaldo. La página ya admite esa ausencia. La API informa HTTP 503 si la red candidata no conecta todos los nodos y el endpoint individual rechaza tipos de zona no admitidos con 422. Se comprobó HTTP local; falta publicar estas correcciones. Error, detección y resolución se documentan en la sección de IA de `Informe.md`.
-
-## Lo que ya consume la página
-
-`POST /api/simular-red`, cuerpo `{"escenario_crecimiento": 1.0}`. Los presets son 1.0, 1.1 y 1.3. Actualmente multiplican la **tasa anual de crecimiento poblacional**; no multiplican directamente la demanda. Mantener esquema, textos y predictor alineados.
-
-La respuesta conserva `nodos`, `tendidos_mst`, `flujos` y `metricas_ml`. Predicciones, MST, flujo máximo y balance se calculan en Python. El navegador valida y presenta; no reconstruye el abastecimiento sumando caudales de cañerías, porque eso contaría el mismo agua más de una vez.
-
-## Campos implementados y reglas del intercambio
-
-1. Incluir `PLANTA` en `nodos`, con sus coordenadas y demanda cero; los barrios mantienen su demanda proyectada en m³/día.
-2. Incorporar `tendidos_candidatos`, una lista con `origen`, `destino`, `costo`, `capacidad_maxima`, igual estructura básica que los seleccionados. Todos los elementos del MST deben estar entre los candidatos con los mismos costos y capacidades. Se prioriza esta lista sobre la geometría CSV local.
-3. Enviar `flujos` para **todos** los tendidos del MST, incluido el flujo cero. `flujo_actual` es una magnitud no negativa y no supera `capacidad_maxima`; los extremos identifican el tendido no dirigido, sin inferir sentido físico. No filtrar los registros por utilización. La página distingue cercanía desde 90 % y saturación al 100 % mediante el cociente; alinear también `saturada`.
-4. Agregar el resumen calculado por el pipeline:
+`POST /api/simular-red`, Content-Type application/json:
 
 ```json
-{
-  "resumen_capacidad": {
-    "demanda_total_m3_dia": 65,
-    "caudal_abastecido_m3_dia": 61,
-    "deficit_m3_dia": 4
-  }
-}
+{"caso_red": "progresivo", "escenario_crecimiento": 1.3}
 ```
 
-Los números son un **caso de prueba resuelto a mano**, no una respuesta del modelo publicado. El resumen se agrega al objeto de simulación existente, no reemplaza sus listas.
+- `caso_red`: `original` por omisión o `progresivo`. Un valor ajeno al enum produce 422; nunca es una ruta de archivo.
+- `escenario_crecimiento`: positivo y <=5; multiplica la **tasa anual de crecimiento poblacional**, no directamente el consumo.
+- La respuesta confirma ambos valores. La selección de caso solo cambia capacidades, manteniendo candidatos, geometría, costos y modelo.
+- Red candidata vacía/desconectada: 503. Una petición inválida se rechaza mediante validación de FastAPI/Pydantic.
 
-- `demanda_total_m3_dia`: suma de las demandas de barrios, excluyendo planta.
-- `caudal_abastecido_m3_dia`: valor total de flujo máximo retornado por el cálculo hacia el supersumidero.
-- `deficit_m3_dia`: demanda total menos caudal abastecido.
-- Todos son finitos y no negativos; suministro no supera demanda. No enviar ceros para representar valores desconocidos.
-- El resumen debe pertenecer al mismo escenario que nodos y flujos. No reutilizar un total base con demandas recalculadas.
+## Respuesta
 
-Para compatibilidad, omitir `resumen_capacidad` o usar `null` deja el diagnóstico como incompleto. Si se entrega el objeto, los tres campos son obligatorios. El cliente valida suma de demandas y balance con tolerancia `max(0.1 m³/día, suma de demandas × 10⁻⁶)`, para redondeo acumulado; no corrige balances inválidos silenciosamente. Evitar redondear antes de los cálculos y mantener precisión en JSON.
+| Campo | Contenido |
+| --- | --- |
+| `caso_red`, `escenario_crecimiento` | Identificación de la solicitud calculada |
+| `nodos` | PLANTA y barrios con coordenadas, tipo y demanda diaria |
+| `tendidos_mst` | Conexiones elegidas con origen, destino, costo y capacidad |
+| `tendidos_candidatos` | Alternativas del mismo CSV/caso usado por Kruskal |
+| `flujos` | Todos los enlaces del MST, incluidos caudales cero |
+| `resumen_capacidad` | Demanda, suministro y déficit generales |
+| `metricas_ml` | MAE, RMSE y R² persistidos válidos, o null |
 
-El resumen basta para presentar cobertura global. No identifica por sí solo qué barrio tiene déficit; eso requeriría un dato adicional calculado por el backend, todavía fuera de esta extensión.
+Cada barrio incluye `demanda_diaria_proyectada`, `caudal_abastecido_m3_dia` y `deficit_m3_dia`, en m³/día. Su suministro se obtiene del flujo hacia SUPER_SUMIDERO, no de la cañería de entrada. PLANTA tiene demanda cero y los campos de suministro/déficit son null, porque es fuente.
 
-## Qué ya está preparado en frontend
+Antes de redondear se verifican valores finitos, no negatividad, suministro <= demanda y suma de consumos igual al flujo máximo. El resumen suma cantidades publicadas por barrio a dos decimales para mantener su balance. Puede haber diferencias de centésimas respecto al flujo de precisión completa.
 
-- Cada tendido seleccionado tiene etiqueta de caudal y utilización en el gráfico, o **Sin dato** si no se recibió flujo. El cero real se muestra como `0 m³/día`.
-- El panel de capacidad presenta demanda, suministro y déficit cuando existe un resumen válido. Sin él no declara que alcanza el agua, aunque tenga todos los flujos o ningún tramo crítico.
-- Se muestran resultados del escenario efectivamente recibido; errores de red o de contrato conservan el resultado previo con su identificación.
-- Se validan candidatos/MST, flujos/capacidades y balance antes de mostrar resultados. La extensión está cubierta por pruebas con mocks; no hay modo demo ni respuestas simuladas en producción.
+Todos los tendidos seleccionados deben estar entre candidatos con iguales costos/capacidades. Los extremos identifican conexiones **no dirigidas**; `flujo_actual` es magnitud neta no negativa y no expresa sentido físico. No sumar todos los caudales de cañerías como suministro: contaría agua en tránsito más de una vez.
 
-## Caso para coordinar pruebas de ambos lados
+`saturada` corresponde al 100 % con tolerancia numérica. La página distingue también cercanía desde 90 %. Máximo flujo optimiza suministro total; no garantiza equidad ni una asignación única por barrio.
 
-Red: PLANTA–A con capacidad 70 y A–B con capacidad 35 m³/día.
+## Validación y compatibilidad del cliente
 
-| Caso de prueba | Demanda A | Demanda B | Demanda total | Flujo PLANTA–A | Flujo A–B | Abastecido | Déficit |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Cubierto | 20 | 30 | 50 | 50 | 30 | 50 | 0 |
-| Insuficiente | 26 | 39 | 65 | 61 | 35 | 61 | 4 |
+- Verifica identificadores, referencias, duplicados, números finitos, capacidades, candidatos/MST y balances.
+- Para el resumen anterior sin desglose, tolera redondeo acumulado con max(0.1 m³/día, demanda × 10⁻⁶).
+- Si hay balances por barrio, deben estar completos, suministro <= demanda y cuadrar dentro de 0.011 m³/día; sus sumas deben coincidir con el resumen dentro de esa tolerancia.
+- Original admite respuestas anteriores sin metadatos/desglose. Un dato ausente aparece como no informado, no como cero. Sin resumen no se declara cobertura.
+- Progresivo exige confirmar caso/crecimiento; una API antigua que ignore el campo genera error en vez de mostrar otro caso.
+- Respuestas de otro caso/escenario, errores HTTP o contratos inválidos no reemplazan un resultado válido silenciosamente. La comparación requiere las tres respuestas completas.
 
-Las demandas se fijan manualmente para validar grafos/presentación. No se supone que el predictor real produzca exactamente esas cifras al aumentar la tasa poblacional un 30 %. Los fixtures están solo en `frontend/src/tests/fixtures/capacidad.ts` y no prueban el entrenamiento ni los algoritmos de Python.
+## Caso conocido de pruebas
 
-## Validación conjunta y cierre
+Capacidades PLANTA–A=70 y A–B=35 m³/día:
 
-1. Implementación manual y contrato completo presentes; pasaron 22 pruebas backend. Se corrigieron los casos registrados en la sección de IA, incluyendo null de métricas y desconexión. Los casos de la tabla verifican cobertura/déficit con datos controlados.
-2. Se verificaron OpenAPI y escenarios 1.0/1.1/1.3 por HTTP en Render y la página en Edge: todos los caudales disponibles y déficit visible. Ver resultados en `verificacion-proyecto.md`.
-3. Falta comprobar CORS con el origen definitivo de Vercel, arranque después de inactividad e instalación/demo en otra máquina.
-4. Capturas reales renovadas con el contrato completo. Los casos de prueba no se presentan como mediciones ni predicciones reales.
+| Demanda A/B | Suministro A/B | Flujo PLANTA–A / A–B | Déficit total |
+| --- | --- | --- | --- |
+| 20 / 30 | 20 / 30 | 50 / 30 | 0 |
+| 26 / 39 | 26 / 35 | 61 / 35 | 4 |
+
+Valores fijados a mano para verificar algoritmos y presentación, no predicciones del modelo. Los mocks permanecen en tests.
+
+## Otras rutas
+
+`GET /api/red/nodos`, `/conexiones`, `/mst` inspeccionan el caso original. `GET /api/modelo/status`, `/metricas` y `POST /api/modelo/predecir` permiten inspección/predicción individual. Tipos de zona fuera de los tres admitidos producen 422. Métricas ausentes/inválidas dan null, sin constantes de respaldo.
+
+La cobertura actual de pruebas y publicación se mantiene en [verificacion-proyecto.md](verificacion-proyecto.md).

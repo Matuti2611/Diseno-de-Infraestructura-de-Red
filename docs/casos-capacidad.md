@@ -86,11 +86,11 @@ Los valores corresponden al modelo/CSV versionados. Esta prueba usa la API local
 
 ### Verificaciones automatizadas
 
-- **25 pruebas backend aprobadas**: tres nuevas cubren ruta ASGI completa, seis combinaciones, capacidad cerca del límite, conservación del original y coherencia MST/candidatos, balances individuales/globales, ejemplo conocido PLANTA–A–B, rechazo 422 de casos no admitidos y reproducción del CSV sin alterar el original.
+- **28 pruebas backend aprobadas**: las pruebas de casos cubren ruta ASGI completa, seis combinaciones, capacidad cerca del límite, conservación del original y coherencia MST/candidatos, balances individuales/globales, ejemplo conocido PLANTA–A–B, rechazo 422 de casos no admitidos y reproducción del CSV sin alterar el original.
 - **43 pruebas frontend aprobadas**, lint, TypeScript y build. Seis nuevas cubren balances inválidos, API que ignora el caso o devuelve otro crecimiento, presentación/comparación, cancelación, respuestas tardías y fallo parcial sin datos inventados.
 - HTTP real local: seis simulaciones 200 y caso desconocido 422. Edge: 17 nodos, 16 barrios, comparación completa, cambio a déficit y móvil de 390 px sin desbordamiento ni excepciones.
 - Capturas de integración local: [comparación](capturas/caso-progresivo-comparacion.png) y [controles en móvil](capturas/caso-progresivo-movil.png). No corresponden a una publicación nueva de Render/Vercel.
 
-Se repitieron las verificaciones antes de registrar los cambios: 25/43 pruebas, lint y build aprobados. Edge también simuló una desconexión: mostró error, conservó el caso/escenario anterior con sus 16 barrios y se recuperó al reintentar. La prueba manual anterior queda disponible para el usuario.
+Verificación actual de cierre: 28/43 pruebas, lint y build aprobados. Edge también simuló una desconexión: mostró error, conservó el caso/escenario anterior con sus 16 barrios y se recuperó al reintentar. La prueba manual anterior queda disponible para el usuario.
 
-Los cambios se agrupan en commits locales y el usuario realiza el push. Primero actualizar/verificar la API de Render; después probar el frontend con esa URL y desplegarlo en Vercel. Sigue pendiente el ensayo en otra computadora; estas ampliaciones no se publicaron desde esta sesión.
+El usuario realiza el push; el estado de commits y ajustes pendientes se mantiene en `context.md`. Si se publica, primero actualizar/verificar la API de Render y después el frontend con esa URL. Probar otra computadora es recomendable; estas verificaciones locales no declaran un despliegue público actualizado.

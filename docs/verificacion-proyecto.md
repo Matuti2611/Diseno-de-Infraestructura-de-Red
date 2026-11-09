@@ -1,59 +1,45 @@
-# Verificación técnica del proyecto
+# Verificación final del proyecto
 
-Estado: integración completa verificada con Render y correcciones adicionales comprobadas localmente. Correcciones, entorno, efectos y documentación se agrupan en commits locales; el usuario realiza el push. Falta verificar las correcciones en Render y publicar el frontend.
+## Alcance revisado
 
-## Estado comprobado
+Consigna general y TP de red de agua contrastados con implementación/documentación. Las correcciones finales y su documentación se agrupan en commits locales por indicación del usuario; el push queda a su cargo. No se consultaron cambios remotos no autorizados ni se publicaron servicios. No se cambió dataset, modelo exportado ni dependencias, y no se automatizó la elección de modelos ni se añadió un importador de datos.
 
-- Kruskal manual con Union-Find; Edmonds–Karp manual con BFS y flujo residual. NetworkX sirve de representación y referencia de totales con tolerancia 0.1.
-- API con planta, 26 candidatos, 16 tendidos, sus 16 caudales y resumen de abastecimiento.
-- Frontend consume el contrato real, presenta caudales/balance y conserva estados explícitos para datos ausentes.
-- Nuevo entrenamiento reproducido sin sobrescribir el modelo, con métricas en archivo temporal: el JSON completo coincide con el entregado. Selección y comparación por CV de cinco pliegues dentro del 80 % de entrenamiento; exclusión de espaciales comparada allí. Lineal sin espaciales: MAE CV 141.80; test MAE 130.11/RMSE 172.14/R² 0.9940/MAPE 3.57 %. Desglose por tipo de zona y muestras de residuos presentes.
+Se corrigieron descripciones/documentación obsoletas, una etiqueta del esquema de población y la supresión global de warnings en inferencia. No se detectó una discrepancia matemática en los casos comprobados.
 
-## Correcciones y registro de uso de IA
+## Cobertura comprobada
 
-El registro de errores, cómo se detectaron, cómo se resolvieron y qué pruebas los verifican está en la [sección de uso de IA del informe](../Informe.md#errores-de-la-ia-detectados-y-cómo-los-resolvimos). No se atribuyen como errores personales de un integrante.
+| Área | Evidencia |
+| --- | --- |
+| Datos | Generación reproducible, estructura del caso y conectividad |
+| ML | Inferencia individual/lotes/categorías; métricas válidas o null, rechazo de categorías desconocidas |
+| Evaluación | MAE/RMSE/MSE/R²/MAPE conocidos; desglose por zona; signo/valor de residuos y no modificación de entradas |
+| MST | Union-Find, costo conocido 6 sobre función productiva, árbol real y rechazo de topología vacía/desconectada/aislada |
+| Flujo | Caso PLANTA–A–B, capacidades/conservación y máximo 2 que requiere cancelar un flujo residual previo |
+| API | Recorrido ASGI completo de seis casos/escenarios, 422 de caso inválido, 503 de topología no disponible y coherencia de candidatos/MST |
+| Barrios | Suministro no negativo <= demanda, déficit correcto y sumas iguales al resumen |
+| Frontend | Contrato, HTTP/timeout, cero/ausencia, búsquedas/teclado, respuestas tardías, cancelación, casos, comparación y reintento |
+| Efectos | Reinicio/limpieza del contador, retiro en error/éxito e imagen accesible sin WebGL |
 
-Las correcciones locales incluyen codificación estable en inferencia, ausencia explícita de métricas mediante null, prueba de Kruskal sobre la función real y control de topología desconectada. No se modificaron modelo serializado ni datos sintéticos. El caso principal conserva su demanda y balance; el cambio de predicción afecta a consultas individuales o lotes que antes perdían categorías.
+**28 pruebas backend** en ocho archivos y **43 frontend** en seis archivos. Lint, TypeScript y build frontend aprobados. El conteo describe esta suite: no equivale a cobertura exhaustiva ni a garantía de ausencia de errores.
 
-## Pruebas
+Los tres tests añadidos en el cierre son casos conocidos, no otro dataset de entrenamiento. No se reentrenó ni se ampliaron funcionalidades por esa revisión.
 
-`.venv\Scripts\python.exe -m unittest discover -s backend/tests -v`: **22 pruebas aprobadas** en seis archivos.
+## Comprobaciones de integración
 
-Las regresiones nuevas fallaron antes de corregir el código y ahora comprueban:
+Seis peticiones HTTP locales respondieron 200 y caso desconocido 422. Edge con API local comprobó 17 nodos, 16 barrios, comparación de tres filas, transición a déficit y pantalla de 390 px sin desbordamiento. Al simular desconexión conservó el resultado identificado y se recuperó al reintentar.
 
-- Predicciones iguales en lote completo, por categoría e individuales; endpoint individual para cada tipo y rechazo de categorías no admitidas.
-- Métricas ausentes, corruptas, incompletas o no finitas sin cifras de respaldo; simulación disponible con `metricas_ml: null`; archivo válido con R² negativo.
-- Kruskal productivo con costo conocido 6, conectividad y ausencia de ciclos; rechazo de redes vacías, desconectadas o con nodos declarados aislados.
-- Error de topología presentado por API como HTTP 503 en vez de resultado incompleto.
+En Progresivo, Base y +10 % están cubiertos; +30 % da suministro ~2195 y déficit ~47.09 m³/día. Original conserva insuficiencia. Resultados, regla, capturas y pasos manuales en [casos-capacidad.md](casos-capacidad.md).
 
-Frontend antes de la ampliación de casos: 37 pruebas, lint y build con TypeScript aprobados. El cliente ya acepta métricas null. Se incorporaron los efectos pedidos por Ciro: HoloCard en pestaña especial y LatticeLoader para solicitudes reales. Las cuatro pruebas nuevas verifican contador/limpieza, éxito/error, alternativa sin WebGL y navegación sin solicitudes extra; ver [efectos-visuales.md](efectos-visuales.md).
+Las métricas JSON del entrenamiento actual se reprodujeron en la revisión previa sin sobrescribir modelo/artefactos: test MAE 130.11, RMSE 172.14, R² 0.9940 y MAPE 3.57 %. La selección fija coincide con la configuración de menor MAE medio de CV; no es un selector automático para cualquier dataset.
 
-Se comprobó también HTTP local con una API temporal y métricas ausentes, sin tocar archivos reales: simulación 200 con 16 caudales y balance base sin cambios, `metricas_ml: null`; consulta de métricas 200/null; Z16 individual 10128.63 m³/mes y categoría inválida 422. Falta publicar estas correcciones y comprobarlas en Render.
+## Documentación
 
-## Resultados reales observados en Render
+README e instalación describen el arranque real. Contrato, plan, informe y matriz se actualizaron para describir lo implementado. Se retiraron cifras antiguas que se presentaban junto a resultados actuales y afirmaciones no justificadas de análisis automático, representatividad de residuos o EDA en un notebook vacío. Los errores y su corrección quedan en la sección de IA del informe, sin atribución personal.
 
-La revisión previa comprobó OpenAPI y tres POST HTTP 200 con contrato completo. No se atribuye al servicio la corrección local posterior mientras no se publique y verifique.
+## Límites y cierre
 
-| Escenario | Demanda m³/día | Abastecido m³/día | Déficit m³/día |
-| --- | --- | --- | --- |
-| Base | 2167.74 | 1435.18 | 732.56 |
-| +10 % | 2192.58 | 1439.69 | 752.89 |
-| +30 % | 2242.26 | 1448.71 | 793.55 |
+La revisión no prueba cualquier CSV, topología, volumen de datos o dispositivo posible. Los tests usan casos conocidos e invariantes del alcance entregado. No se reejecutó entrenamiento sobre otro dataset, porque no es requisito del enunciado.
 
-Los porcentajes multiplican la tasa poblacional. Se recibieron 17 nodos, 26 candidatos y 16 caudales en cada escenario. Edge confirmó las 16 etiquetas, cero Sin dato, déficit visible y móvil de 390 px sin desbordamiento. Las capturas de `capturas/` corresponden a esa verificación real, no a mocks.
+La instalación limpia previa y las instrucciones están disponibles; no se comprobó otra computadora ni Linux en esta revisión. El enunciado pide instrucciones reproducibles y demo funcionando, no un proveedor de hosting ni un dataset adicional.
 
-El flujo máximo optimiza suministro total, no equidad. Puede haber tramos con cero y varias asignaciones máximas válidas; comparar totales y conservación, sin exigir una asignación idéntica a NetworkX.
-
-## Ampliación actual de casos y barrios
-
-Las dos mejoras están implementadas localmente: selección original/progresivo, regla reproducible del segundo CSV y suministro/déficit de cada barrio desde el supersumidero. La página tiene selector, detalle/tabla por barrio y comparación de tres escenarios, sin alterar el original ni añadir dependencias.
-
-**25 pruebas backend y 43 frontend aprobadas**, lint, TypeScript y build. ASGI automatizado de las seis combinaciones y ejemplo conocido de consumo/tránsito; HTTP local 200 para las seis y 422 para caso desconocido. Edge con API local confirmó 16 barrios, comparación, déficit progresivo de 47.09 m³/día en +30 % y móvil de 390 px sin desbordamiento ni excepciones. Reglas, cantidades publicadas y capturas en [casos-capacidad.md](casos-capacidad.md).
-
-La evaluación de ML ya está implementada y reproducida. Sus pruebas específicas y comparación con una referencia simple en el script son mejoras adicionales. La exportación usa explícitamente la configuración ganadora de CV, sin selección automática si cambian los datos. La comprobación adicional de mantener consumo histórico dio MAE 479.20 frente a 130.11 del modelo.
-
-## Entorno y cierre pendiente
-
-Dependencias fijadas, Python 3.12.10 y Node 24.x; no se incorporaron paquetes para estas ampliaciones. La instalación limpia anterior está documentada en [instalacion-reproducible.md](instalacion-reproducible.md); su prueba en otra computadora sigue pendiente.
-
-Falta actualizar/verificar API en Render, comprobar la página contra ella y publicar frontend en Vercel. No se confirmó el estado de la cuenta Vercel ni cambios remotos posteriores. Se repitieron 25/43 pruebas, lint, build y recorrido Edge antes de agrupar los cambios en commits locales; desconexión y reintento conservaron el resultado identificado y recuperaron la conexión. El usuario realiza el push. Conservar diferenciados resultados HTTP locales y observaciones previas del servicio público. Completar el registro de IA adicional con información confirmada del grupo.
+Falta confirmar que el repositorio remoto tenga los cambios finales y preparar la demo/defensa. Si se entrega una URL, comprobar que API y frontend públicos estén actualizados. No se declara un despliegue actual por haber pasado localmente.
