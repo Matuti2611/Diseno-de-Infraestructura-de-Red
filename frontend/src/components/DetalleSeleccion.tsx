@@ -14,6 +14,10 @@ export function DetalleSeleccion({ red, seleccion }: { red: RedVisual; seleccion
       <div><dt>Identificador</dt><dd>{nodo.id}</dd></div>
       {nodo.poblacion !== undefined && <div><dt>Población del caso</dt><dd>{numero(nodo.poblacion, 0)} hab.</dd></div>}
       <div><dt>Demanda proyectada</dt><dd>{nodo.demanda === null ? 'Fuente de agua' : `${numero(nodo.demanda)} m³/día`}</dd></div>
+      {nodo.id !== 'PLANTA' && <>
+        <div><dt>Suministro al barrio</dt><dd>{nodo.suministro == null ? 'No informado' : `${numero(nodo.suministro, 2)} m³/día`}</dd></div>
+        <div><dt>Déficit del barrio</dt><dd>{nodo.deficit == null ? 'No informado' : `${numero(nodo.deficit, 2)} m³/día`}</dd></div>
+      </>}
     </dl>}
     {arista && <><span className={`estado-pill estado-${arista.estado}`}>{etiquetasEstado[arista.estado]}</span><dl className="detalle-datos">
       <div><dt>Costo del tendido</dt><dd>{numero(arista.costo, 2)} u. c.</dd></div>

@@ -1,4 +1,5 @@
 export type Escenario = 1 | 1.1 | 1.3;
+export type CasoRed = 'original' | 'progresivo';
 export type Vista = 'tendidos' | 'capacidad';
 
 export interface NodoRed {
@@ -7,6 +8,8 @@ export interface NodoRed {
   longitud: number;
   tipo_zona: string;
   demanda_diaria_proyectada: number;
+  caudal_abastecido_m3_dia?: number | null;
+  deficit_m3_dia?: number | null;
 }
 
 export interface TendidoMST {
@@ -38,6 +41,8 @@ export interface ResumenCapacidad {
 }
 
 export interface SimulacionResponse {
+  caso_red?: CasoRed;
+  escenario_crecimiento?: number;
   nodos: NodoRed[];
   tendidos_mst: TendidoMST[];
   flujos: EstadoFlujo[];
@@ -54,6 +59,8 @@ export interface NodoVisual {
   longitud: number;
   tipo_zona: string;
   demanda: number | null;
+  suministro?: number | null;
+  deficit?: number | null;
   poblacion?: number;
 }
 

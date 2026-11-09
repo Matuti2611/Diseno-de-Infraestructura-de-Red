@@ -5,6 +5,7 @@ import type { AristaVisual, EstadoTramo, NodoVisual, RedVisual, SimulacionRespon
 export const numero = (valor: number, decimales = 1) => new Intl.NumberFormat('es-AR', { maximumFractionDigits: decimales }).format(valor);
 export const nombreNodo = (id: string) => id === 'PLANTA' ? 'Planta de agua' : /^Z\d+$/.test(id) ? `Barrio ${id.slice(1)}` : id;
 export const nombreEscenario = (escenario: number) => escenario === 1 ? 'Base' : `+${Math.round((escenario - 1) * 100)} %`;
+export const nombreCaso = (caso: string) => caso === 'progresivo' ? 'Progresivo' : 'Original';
 export const etiquetasEstado: Record<EstadoTramo, string> = {
   candidato: 'No seleccionado', 'sin-dato': 'Sin dato de flujo', informado: 'Flujo informado',
   cercano: 'Cerca del límite', saturado: 'Saturado', 'sin-capacidad': 'Sin capacidad',
@@ -30,6 +31,8 @@ export function construirRed(respuesta: SimulacionResponse): RedVisual {
   ));
   const nodos: NodoVisual[] = respuesta.nodos.map(n => ({
     ...n, demanda: n.id === 'PLANTA' ? null : n.demanda_diaria_proyectada,
+    suministro: n.id === 'PLANTA' ? null : n.caudal_abastecido_m3_dia ?? null,
+    deficit: n.id === 'PLANTA' ? null : n.deficit_m3_dia ?? null,
     poblacion: mismaGeometria ? caso.zonas.find(z => z.id === n.id)?.poblacion : undefined,
   }));
   if (mismaGeometria && !nodos.some(n => n.id === 'PLANTA')) {

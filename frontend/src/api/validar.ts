@@ -25,9 +25,17 @@ function nodo(valor: unknown): NodoRed {
   const latitud = numero(v.latitud, -90);
   const longitud = numero(v.longitud, -180);
   if (latitud > 90 || longitud > 180) throw new Error('Coordenadas fuera de rango.');
+  const demanda = numero(v.demanda_diaria_proyectada);
+  const balance = v.caudal_abastecido_m3_dia != null || v.deficit_m3_dia != null;
+  const suministro = balance ? numero(v.caudal_abastecido_m3_dia) : null;
+  const deficit = balance ? numero(v.deficit_m3_dia) : null;
+  if (suministro !== null && deficit !== null && (suministro > demanda + 1e-6 || Math.abs(demanda - suministro - deficit) > .011)) {
+    throw new Error('El abastecimiento del barrio no coincide con su demanda.');
+  }
   return {
     id: texto(v.id), latitud, longitud, tipo_zona: texto(v.tipo_zona),
-    demanda_diaria_proyectada: numero(v.demanda_diaria_proyectada),
+    demanda_diaria_proyectada: demanda,
+    ...(balance ? { caudal_abastecido_m3_dia: suministro, deficit_m3_dia: deficit } : {}),
   };
 }
 
@@ -72,6 +80,11 @@ export function validarSimulacion(valor: unknown): SimulacionResponse {
     if (!a || Math.abs(a.capacidad_maxima - f.capacidad_maxima) > 1e-6) throw new Error('El flujo no coincide con los tendidos recibidos.');
   }
   const respuesta: SimulacionResponse = { nodos, tendidos_mst: mst, flujos, metricas_ml: null };
+  if (v.caso_red !== undefined) {
+    if (v.caso_red !== 'original' && v.caso_red !== 'progresivo') throw new Error('Caso de red inválido.');
+    respuesta.caso_red = v.caso_red;
+  }
+  if (v.escenario_crecimiento !== undefined) respuesta.escenario_crecimiento = numero(v.escenario_crecimiento);
   if (v.resumen_capacidad != null) {
     const r = objeto(v.resumen_capacidad);
     const demanda = numero(r.demanda_total_m3_dia);
@@ -85,6 +98,15 @@ export function validarSimulacion(valor: unknown): SimulacionResponse {
       throw new Error('El resumen de capacidad no coincide con las demandas o el balance de agua.');
     }
     respuesta.resumen_capacidad = { demanda_total_m3_dia: demanda, caudal_abastecido_m3_dia: abastecido, deficit_m3_dia: deficit };
+  }
+  const barrios = nodos.filter(n => n.id !== 'PLANTA');
+  if (barrios.some(n => n.caudal_abastecido_m3_dia != null)) {
+    if (barrios.some(n => n.caudal_abastecido_m3_dia == null || n.deficit_m3_dia == null)) throw new Error('Abastecimiento por barrio incompleto.');
+    const resumen = respuesta.resumen_capacidad;
+    if (!resumen) throw new Error('Falta el balance general para verificar los barrios.');
+    const suministro = barrios.reduce((s, n) => s + n.caudal_abastecido_m3_dia!, 0);
+    const deficit = barrios.reduce((s, n) => s + n.deficit_m3_dia!, 0);
+    if (Math.abs(suministro - resumen.caudal_abastecido_m3_dia) > .011 || Math.abs(deficit - resumen.deficit_m3_dia) > .011) throw new Error('El abastecimiento de los barrios no coincide con el total.');
   }
   if (v.metricas_ml != null) {
     const m = objeto(v.metricas_ml);

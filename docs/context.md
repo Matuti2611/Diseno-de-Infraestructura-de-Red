@@ -6,7 +6,7 @@
 
 TP de una cooperativa de agua: datos sintéticos, regresión de consumo a cinco años, demanda por barrio, Kruskal y Edmonds–Karp manuales, API FastAPI y página React/TypeScript/Vite. Ciro trabaja en frontend y Matías en backend/ML/grafos. Ciro asumió completar las mejoras de casos y abastecimiento por barrio con su presentación/comparación.
 
-El usuario autorizó probar y agrupar los cambios en commits locales. Este grupo registra backend y pruebas; frontend y cierre documental están preparados para los siguientes. El push lo hace el usuario. No se publicaron ampliaciones en Render/Vercel ni se consultaron cambios remotos posteriores.
+El usuario autorizó probar y agrupar los cambios en commits locales. El backend y sus pruebas ya están registrados. Este grupo incorpora el frontend y sus pruebas; el cierre documental está preparado para el siguiente. El push lo hace el usuario. No se publicaron ampliaciones en Render/Vercel ni se consultaron cambios remotos posteriores.
 
 ## Datos
 
@@ -34,6 +34,8 @@ Progresivo cubre Base y +10 % (entrada ~99.9 %); +30 % tiene demanda 2242.09, su
 
 ## Página y próximo paso
 
-La página existente tiene Tendidos/Capacidad, escenarios, selección, tabla, efectos aprobados y cliente validado. El grupo siguiente incorpora selector de casos, suministro/déficit por barrio y comparación, manteniendo las validaciones y cancelación. Otras mejoras visuales requieren consulta al usuario.
+La página incorpora selector Original/Progresivo, detalle/tabla de demanda-suministro-déficit por barrio y comparación Base/+10 %/+30 % del mismo caso, sin cambiar el escenario principal del gráfico. El cliente valida balances, metadatos y coherencia de los casos. Una API antigua que ignore Progresivo produce aviso, no resultados de otro caso. Se cancela la comparación al cambiar de caso y no se muestran tablas parciales si falla una consulta.
 
-Después registrar documentación, informe y prueba manual; el usuario hará push. Actualizar/verificar primero API en Render y luego frontend en Vercel. Repetir instalación en otra computadora. Python se inicia desde la raíz por sus rutas relativas; no reinstalar dependencias ni detener procesos ajenos a QA.
+43 pruebas frontend, lint y build con TypeScript aprobados. Edge con API local verificó 17 nodos, 16 barrios, comparación completa, transición a déficit, móvil de 390 px sin desbordamiento y cero excepciones. La desconexión simulada conservó los datos identificados; reintentar tras restablecer la red recuperó la simulación. Otras mejoras visuales requieren consulta al usuario.
+
+El próximo grupo registra documentación, informe, capturas y la guía manual; el usuario hará push. Actualizar/verificar primero API en Render y luego frontend en Vercel. Repetir instalación en otra computadora. Python se inicia desde la raíz por sus rutas relativas; no reinstalar dependencias ni detener procesos ajenos a QA.
