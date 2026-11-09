@@ -1,12 +1,15 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Literal
+
+CasoRed = Literal['original', 'progresivo']
 
 class EscenarioRequest(BaseModel):
+    caso_red: CasoRed = 'original'
     escenario_crecimiento: float = Field(
         default=1.0, 
         gt=0.0,
         le=5.0,
-        description="Multiplicador de demanda / tasa de crecimiento (ej. 1.10 para +10%)"
+        description="Multiplicador de la tasa anual de crecimiento poblacional (1.10 para +10%)"
     )
 
 class NodoRed(BaseModel):
@@ -15,6 +18,8 @@ class NodoRed(BaseModel):
     longitud: float
     tipo_zona: str
     demanda_diaria_proyectada: float 
+    caudal_abastecido_m3_dia: Optional[float] = None
+    deficit_m3_dia: Optional[float] = None
 
 class TendidoMST(BaseModel):
     origen: str
@@ -40,6 +45,8 @@ class MetricasML(BaseModel):
     r2: float
 
 class SimulacionResponse(BaseModel):
+    caso_red: CasoRed = 'original'
+    escenario_crecimiento: float = 1.0
     nodos: List[NodoRed]
     tendidos_mst: List[TendidoMST]
     tendidos_candidatos: Optional[List[TendidoMST]] = None

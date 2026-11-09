@@ -19,7 +19,7 @@ def simular_red(request: EscenarioRequest):
         raise HTTPException(status_code=400, detail="El escenario de crecimiento debe ser mayor a 0")
         
     try:
-        resultado = ejecutar_simulacion(request.escenario_crecimiento)
+        resultado = ejecutar_simulacion(request.escenario_crecimiento, request.caso_red)
     except ValueError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
     
@@ -29,7 +29,9 @@ def simular_red(request: EscenarioRequest):
             latitud=n["latitud"],
             longitud=n["longitud"],
             tipo_zona=n["tipo_zona"],
-            demanda_diaria_proyectada=n["demanda_diaria_proyectada"]
+            demanda_diaria_proyectada=n["demanda_diaria_proyectada"],
+            caudal_abastecido_m3_dia=n.get('caudal_abastecido_m3_dia'),
+            deficit_m3_dia=n.get('deficit_m3_dia')
         )
         for n in resultado["nodos"]
     ]
@@ -73,6 +75,8 @@ def simular_red(request: EscenarioRequest):
     )
     
     return SimulacionResponse(
+        caso_red=resultado['caso_red'],
+        escenario_crecimiento=resultado['escenario_crecimiento'],
         nodos=nodos_res,
         tendidos_mst=tendidos_res,
         tendidos_candidatos=candidatos_res,
