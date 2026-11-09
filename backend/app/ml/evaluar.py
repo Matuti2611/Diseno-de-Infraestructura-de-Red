@@ -60,7 +60,7 @@ def obtener_muestra_residuos(
     col_real: str = "consumo_futuro",
     col_pred: str = "prediccion"
 ) -> list[dict[str, Any]]:
-    """Extrae una muestra representativa de casos reales frente a predichos con residuos."""
+    """Extrae los primeros n casos como ejemplos ilustrativos, no como muestra estadística."""
     muestra = df_eval.head(n)
     filas = []
     for _, fila in muestra.iterrows():

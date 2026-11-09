@@ -16,7 +16,7 @@ router = APIRouter(prefix="/modelo", tags=["Machine Learning"])
 
 
 class PrediccionNodoRequest(BaseModel):
-    poblacion: float = Field(..., gt=0, description="Población proyectada")
+    poblacion: float = Field(..., gt=0, description="Población actual del barrio")
     tipo_zona: Literal["residencial", "comercial", "industrial"] = Field(..., description="Tipo de zona: residencial, comercial o industrial")
     consumo_historico_mensual: float = Field(..., gt=0, description="Consumo mensual base en m³")
     crecimiento_poblacional_estimado: float = Field(default=0.02, description="Tasa anual estimada (ej. 0.02 para 2%)")

@@ -10,7 +10,7 @@ Ciro trabaja en frontend y Matías en backend/ML/grafos. Ciro asumió y autoriz�
 
 ## Estado del repositorio y publicación
 
-La copia recibió el nuevo entrenamiento/evaluación de ML y el CSV progresivo de Matías; se preservaron. Las ampliaciones se agrupan en commits locales de backend, frontend y documentación, como solicitó el usuario; el push queda a su cargo. No se modificaron modelo ni CSV versionados. No se confirmó si GitHub tiene cambios posteriores a los recibidos; no repetir una consulta remota no autorizada por otro medio.
+La copia recibió el nuevo entrenamiento/evaluación de ML y el CSV progresivo de Matías; se preservaron. Las ampliaciones de casos/barrios ya se registraron en commits locales. El usuario autorizó registrar las correcciones y agregados finales de entrega: este grupo reúne las aclaraciones de API/evaluación, retiro de la supresión global de warnings y tres pruebas de valores conocidos; la documentación consolidada está preparada para el grupo siguiente. El push queda a su cargo. No se modificaron modelo ni CSV versionados. No se confirmó si GitHub tiene cambios posteriores a los recibidos; no repetir una consulta remota no autorizada por otro medio.
 
 Render ya alojaba la API y su contrato de planta/candidatos/16 caudales/balance fue verificado. La ampliación de casos y barrios solo está comprobada localmente: actualizar/verificar Render antes de declararla publicada. Frontend preparado para Vercel, publicación sin confirmar. El usuario realiza los push.
 
@@ -38,17 +38,15 @@ Se conserva `aristas_candidatas.csv`. `aristas_progresivas.csv` usa los mismos c
 
 ## Machine learning
 
-Matías cerró la metodología, justificación de features y evaluación de ML en `entrenar.py`:
-- **Separación de validación y test:** Selección de modelo mediante validación cruzada 5-Fold dentro del 80 % de entrenamiento (480 muestras) y reserva estricta del 20 % (120 muestras) como conjunto de prueba final no visto.
-- **Justificación de features:** Comparación experimental en validación cruzada entre incluir y excluir variables espaciales (`latitud`, `longitud`, `fila`, `columna`). Excluirlas redujo el MAE de CV de 142.65 a 141.80 m³/mes y evitó sobreajuste por ruido aleatorio en coordenadas que no intervienen en el consumo.
-- **Comparación de modelos:** En validación cruzada 5-Fold, Regresión Lineal superó a Árbol de Decisión (MAE CV 141.80 frente a 186.66 m³/mes). Se reentrenó en todo el 80 % y se exportó a `backend/models/modelo_consumo.joblib`.
-- **Evaluación final en test (20 %):** MAE = 130.11 m³/mes, RMSE = 172.14 m³/mes, R² = 0.9940, MAPE = 3.57 %. Persistidas en `backend/models/metricas.json` y consumidas por la API.
-- **Análisis de errores:** Desglose en test por tipo de zona: Residencial MAE=106.83 (3.79 %), Comercial MAE=128.09 (2.62 %), Industrial MAE=326.67 (4.48 %). El mayor error absoluto en industria responde a la escala de consumo (~8600 frente a ~3500 m³/mes), manteniéndose el error relativo uniforme por debajo del 5 %. Muestra de residuos documentada en JSON e informe.
-- `features.py`: funciones `preparar_features_entrenamiento` (con exclusión de espaciales) y `preparar_features_inferencia` (asegura coincidencia exacta con `modelo.feature_names_in_`).
-- `evaluar.py`: cálculo de métricas globales (MAE, RMSE, MSE, R², MAPE), evaluación por subgrupos y extracción de residuos.
-- `ml/metricas.py`: centraliza lectura/validación de `metricas.json`. `metricas_ml` es nullable en el esquema; si el archivo no existe o es inválido produce `null` sin fallar.
+El script compara regresión lineal/árbol con y sin variables espaciales mediante CV de cinco pliegues en el 80 % de entrenamiento (480 muestras). Exporta explícitamente la lineal sin espaciales, elección respaldada por el menor MAE medio de CV (141.80 frente a 186.66 del árbol sin espaciales); no es selección automática para otros datasets.
 
-Se reprodujo el entrenamiento con exportación del modelo interceptada y métricas en un directorio temporal: el JSON completo coincide con el versionado, incluidas CV, subgrupos y residuos. El cierre principal de metodología está implementado. La configuración exportada sigue elegida explícitamente en el script; coincide con la ganadora de CV, pero no se selecciona automáticamente si cambia la comparación. No se agregaron tests específicos del nuevo entrenamiento, subgrupos o residuos. Una comprobación adicional de referencia simple (mantener consumo histórico) dio MAE 479.20 frente a 130.11 del modelo; esa comparación todavía no forma parte del script ni del JSON entregado.
+El 20 % de test (120 muestras) no participa en ajuste/CV del script actual. Esa partición ya se consultó durante versiones anteriores: no describirla como evaluación externa ciega. Test actual: MAE 130.11 m³/mes, RMSE 172.14, R² 0.9940 y MAPE 3.57 %. El JSON completo se reprodujo en la revisión previa sin sobrescribir artefactos.
+
+Excluir espaciales coincide con las reglas sintéticas y bajó el MAE medio de CV de 142.65 a 141.80; no afirmar que esa pequeña diferencia demuestra sobreajuste. Hay desglose por tipo de zona y ejemplos de residuos tomados del inicio del test, no una muestra estadísticamente representativa. Industria tiene mayor MAE y MAPE y solo diez muestras: no atribuir toda la diferencia a escala ni prometer generalización real.
+
+Inferencia alinea dummies con las columnas del modelo y conserva predicción individual/lote. Las métricas ausentes/inválidas se informan como null. Se retiró la supresión global de warnings para no ocultar incompatibilidades. La descripción de población individual ya indica población actual.
+
+Se agregaron tests de valores conocidos de MAE/RMSE/MSE/R²/MAPE, grupos y residuos; no se cambió ni reentrenó el modelo. No incorporar otro dataset ni automatización de selección como trabajo obligatorio: el usuario pidió cerrar la consigna actual.
 
 ## Grafos e infraestructura
 
@@ -66,17 +64,17 @@ Las rutas auxiliares de inspección conservan el caso original. Predicción indi
 
 ## Pruebas y resultados comprobados
 
-- Backend: **25 pruebas aprobadas**, siete archivos. Nuevas pruebas recorren ASGI/FastAPI completo, seis combinaciones, coherencia de casos/candidatos/MST, balances individuales/globales, ejemplo PLANTA–A–B que separa tránsito/consumo, rechazo 422 y CSV reproducible sin cambiar el original.
+- Backend: **28 pruebas aprobadas**, ocho archivos. Nuevas pruebas recorren ASGI/FastAPI completo, seis combinaciones, coherencia de casos/candidatos/MST, balances individuales/globales, ejemplo PLANTA–A–B que separa tránsito/consumo, rechazo 422 y CSV reproducible sin cambiar el original. El cierre agregó cancelación residual obligatoria para máximo 2 y métricas/subgrupos/residuos con valores conocidos.
 - Frontend: **43 aprobadas**, seis archivos; lint, TypeScript y build aprobados. Nuevas pruebas de datos incompatibles, API que ignora caso, escenario equivocado, presentación/comparación, cancelación, respuestas tardías y fallo parcial.
 - HTTP local: seis simulaciones 200 y caso inválido 422. Progresivo Base demanda/suministro/déficit 2167.62/2167.62/0; +10 % 2192.42/2192.42/0 (entrada ~99.9 %); +30 % 2242.09/2195.00/47.09 m³/día. Original sigue insuficiente en los tres. Tabla completa en `casos-capacidad.md`.
 - Edge con API local: 17 nodos, tabla de 16 barrios, comparación de tres filas, transición a déficit, sin excepciones y móvil de 390 px sin desbordamiento. Capturas nuevas `capturas/caso-progresivo-*` son locales; las anteriores documentan el Render previo.
-- Antes de agrupar los cambios se repitieron 25/43 pruebas, lint y build, más el recorrido Edge. Una desconexión simulada mostró error conservando los 16 barrios y el caso/escenario anterior; reintentar tras restablecer la red recuperó la respuesta. La guía manual está en `casos-capacidad.md`.
+- Las pruebas actuales son 28/43; el recorrido Edge de integración fue comprobado en el cierre de casos. Una desconexión simulada mostró error conservando los 16 barrios y el caso/escenario anterior; reintentar tras restablecer la red recuperó la respuesta. La guía manual está en `casos-capacidad.md`.
 - Build principal ~270 kB JS / 83 kB gzip; vista Efectos diferida ~20 kB / 7 kB gzip y Pikachu ~49 kB.
-- Instalación limpia previa a los efectos: dependencias fijadas, entornos nuevos, pip check, 22/33 pruebas de esa etapa y build/lint aprobados. No equivale a prueba en otra computadora o Linux. No reinstalar sobre procesos ajenos ni detener servidores que no pertenecen al QA propio.
+- Instalación limpia previa comprobada con dependencias fijadas y entornos nuevos; no se agregaron paquetes después. Los conteos actuales son los indicados arriba. No equivale a prueba en otra computadora o Linux. No reinstalar sobre procesos ajenos ni detener servidores que no pertenecen al QA propio.
 
 ## Informe y uso de IA
 
-Informe vivo alineado con lo probado. Errores, detección, solución y pruebas se registran en su sección de IA, sin atribución personal. Codex/Gemini, paletasdecolores.com.ar, exploración en Figma, patrones declarados del proyecto anterior de Ciro y React Bits están diferenciados. No se inspeccionó código previo ni se atribuye copia literal; no agregar funciones ajenas al alcance como reutilizadas. Registrar solo intervenciones adicionales de IA confirmadas por el grupo.
+Informe técnico consolidado y alineado con lo probado. Se ordenaron README, matriz, contrato, plan y guías con el estado actual, sin mezclar balances viejos o afirmar EDA en el cuaderno vacío. La revisión no cambia funcionalidades de la página. Errores, detección, solución y pruebas se registran en su sección de IA, sin atribución personal. Codex/Gemini, paletasdecolores.com.ar, exploración en Figma, patrones declarados del proyecto anterior de Ciro y React Bits están diferenciados. No se inspeccionó código previo ni se atribuye copia literal; no agregar funciones ajenas al alcance como reutilizadas. Registrar solo intervenciones adicionales de IA confirmadas por el grupo.
 
 ## Hosting y entorno
 
@@ -88,7 +86,7 @@ Si GitHub sigue siendo un repositorio de cuenta personal, Vercel exige que lo im
 
 ## Próximo paso
 
-1. El usuario puede repetir la prueba manual de `casos-capacidad.md` y publicar los commits locales; no se hizo push en esta verificación.
+1. Completar la agrupación autorizada con el informe y las guías consolidadas; el usuario realiza el push. La guía manual está en `casos-capacidad.md`.
 2. Actualizar/verificar API en Render y probar el frontend contra ella antes de publicarlo en Vercel; comprobar CORS, HTTPS e inactividad.
-3. Repetir instalación en otra computadora, actualizar capturas/resultados de la versión publicada y cerrar informe/defensa.
-4. ML principal ya implementado/reproducido; pruebas específicas, referencia simple en el script y automatización de selección son mejoras adicionales, no integración pendiente de casos/barrios.
+3. Confirmar entrega final en GitHub y preparar demo/defensa. El README reproducible es obligatorio; una prueba adicional en otra computadora es recomendable y no un nuevo requisito.
+4. No hay funcionalidades obligatorias pendientes identificadas. Otro dataset, importador web, comparación automática de modelos y hosting público son opcionales; no ampliar el alcance para cerrar.

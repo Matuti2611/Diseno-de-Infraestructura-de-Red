@@ -1,9 +1,7 @@
-import warnings
 import joblib
 from backend.app.config import RUTA_MODELO
 from backend.app.ml.features import preparar_features_inferencia
 
-warnings.filterwarnings("ignore")
 modelo = joblib.load(RUTA_MODELO)
 
 def predecir_demanda(df_zonas, multiplicador_escenario):

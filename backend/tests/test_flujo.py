@@ -11,6 +11,18 @@ from backend.app.grafos.diagnostico import obtener_estados_flujo
 
 
 class FlujoEdmondsKarpTest(unittest.TestCase):
+    def test_cancela_un_flujo_previo_para_alcanzar_el_maximo(self) -> None:
+        # El primer BFS usa S-A-C-T. Para llegar a 2 hay que devolver C-A
+        # y usar S-B-C-A-D-T; una implementación sin residuales se queda en 1.
+        nodos = ['S', 'A', 'B', 'C', 'D', 'T']
+        aristas = [('S', 'A', 1), ('S', 'B', 1), ('A', 'C', 1),
+                   ('A', 'D', 1), ('B', 'C', 1), ('C', 'T', 1), ('D', 'T', 1)]
+        total, flujo = edmonds_karp_manual(nodos, aristas, 'S', 'T')
+        self.assertEqual(total, 2)
+        self.assertEqual(flujo['A']['C'], 0)
+        self.assertEqual(flujo['A']['D'], 1)
+        self.assertEqual(flujo['B']['C'], 1)
+
     def test_caso_controlado_planta_a_b(self) -> None:
         """
         Caso de prueba exacto especificado en docs/contrato-api.md:
