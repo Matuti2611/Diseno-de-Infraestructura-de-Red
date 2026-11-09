@@ -9,11 +9,12 @@
 - [Instalación reproducible](docs/instalacion-reproducible.md): versiones, instalación desde cero y comprobaciones para otra computadora.
 - [Revisión de la consigna](docs/revision-consigna.md): requisitos del PDF, evidencia actual y pendientes de frontend, backend e informe.
 - [Contrato de capacidad](docs/contrato-api.md): geometría, todos los flujos y balance; implementado por ambos lados y verificado en Render.
+- [Casos y abastecimiento por barrio](docs/casos-capacidad.md): ampliación local con caso original/progresivo, regla reproducible, consumo por barrio y comparación de escenarios; pendiente de publicación.
 - [Verificación técnica del proyecto](docs/verificacion-proyecto.md): estado, comprobaciones y próximos pasos. Los errores y su resolución se registran en la sección de IA del informe.
 - [Guía de despliegue](docs/despliegue.md): Vercel para la página y Render para la API, configuración prevista y pasos pendientes antes de publicar.
 - [Instrucciones para agentes de código](AGENTS.md): lectura del contexto, mantenimiento de documentación y criterios de trabajo y pruebas.
 
-API desplegada en Render: [documentación interactiva](https://infraestructura-red-api.onrender.com/docs). Se verificaron 17 nodos, 26 candidatos, 16 flujos y balance completo en tres escenarios. La página muestra esos datos sin tramos Sin dato. Localmente se corrigieron y probaron los casos documentados en «Errores de la IA» del informe: 22 tests backend y 37 frontend aprobados. Esas correcciones siguen pendientes de publicación; faltan despliegue y cierre de entrega.
+API desplegada en Render: [documentación interactiva](https://infraestructura-red-api.onrender.com/docs). Se verificaron 17 nodos, 26 candidatos, 16 flujos y balance completo en tres escenarios. La página muestra esos datos sin tramos Sin dato. Localmente se corrigieron y probaron los casos documentados en «Errores de la IA» del informe: 25 tests backend y 43 frontend aprobados. Esas correcciones siguen pendientes de publicación; faltan despliegue y cierre de entrega.
 
 ## Probar la página
 
@@ -25,7 +26,7 @@ npm.cmd ci
 npm.cmd run dev
 ```
 
-Abrir `http://127.0.0.1:5173`. Usa Render sin tener que ejecutar Python localmente. La primera respuesta puede demorarse después de inactividad. Para verificar: `npm.cmd test`, `npm.cmd run lint` y `npm.cmd run build` (incluye TypeScript). Las 37 pruebas del frontend no sustituyen los tests del backend. El gráfico y el panel muestran caudales y balance reales. La publicación prevista en Vercel sigue pendiente de autorización y verificación.
+Abrir `http://127.0.0.1:5173`. Usa Render sin tener que ejecutar Python localmente. La primera respuesta puede demorarse después de inactividad. Para verificar: `npm.cmd test`, `npm.cmd run lint` y `npm.cmd run build` (incluye TypeScript). Las 43 pruebas del frontend no sustituyen los tests del backend. El gráfico y el panel muestran caudales y balance reales. La publicación prevista en Vercel sigue pendiente de autorización y verificación.
 
 ## Ejecutar el backend localmente
 
@@ -43,7 +44,7 @@ Abrir `http://127.0.0.1:8000/docs`. Para conectar la página a este backend, usa
 
 CSV y modelo ya están versionados: no hay que generarlos ni entrenar al arrancar. Para reentrenar intencionalmente, ejecutar desde la raíz `.venv\Scripts\python.exe -m backend.app.ml.entrenar`; sobrescribe el modelo y las métricas, por lo que deben revisarse juntos antes de publicar. Las rutas actuales requieren ejecutar el backend desde la raíz.
 
-`backend/requirements.txt` fija dependencias directas y transitivas del entorno comprobado, incluido scikit-learn 1.9.1, compatible con el artefacto. Antes de incorporar los efectos, en una copia separada con `.venv` y `node_modules` nuevos pasaron instalación, `pip check`, 22 pruebas backend, las 33 frontend de esa etapa, lint y build con TypeScript. Los efectos no añaden paquetes y la suite actual tiene 37 pruebas frontend aprobadas. No equivale a probar otra computadora: ese ensayo sigue pendiente y tiene una [guía de comprobación](docs/instalacion-reproducible.md).
+`backend/requirements.txt` fija dependencias directas y transitivas del entorno comprobado, incluido scikit-learn 1.9.1, compatible con el artefacto. Antes de incorporar los efectos, en una copia separada con `.venv` y `node_modules` nuevos pasaron instalación, `pip check`, 22 pruebas backend, las 33 frontend de esa etapa, lint y build con TypeScript. Los efectos no añaden paquetes y la suite actual tiene 43 pruebas frontend aprobadas. No equivale a probar otra computadora: ese ensayo sigue pendiente y tiene una [guía de comprobación](docs/instalacion-reproducible.md).
 
 ## Primer paso: generar los datos del caso sintético
 

@@ -20,6 +20,8 @@ El servicio de Render puede tardar en responder después de inactividad. La inte
 
 ## Qué permite hacer
 
+Ampliación local implementada: selector Original/Progresivo; suministro y déficit por barrio en el detalle y tabla de Capacidad; botón para comparar Base/+10 %/+30 % del mismo caso. Los resultados se consultan en Python y no se extrapolan en el navegador. Si Render aún no confirma el caso progresivo se informa que requiere actualizar el backend, sin mostrar otro caso como si fuera el solicitado. Ver [contrato y resultados](../docs/casos-capacidad.md).
+
 - Alternar Tendidos y Capacidad, seleccionar barrios o conexiones y buscar en la tabla.
 - Solicitar escenarios base, +10 % y +30 %. Estos valores multiplican la **tasa de crecimiento poblacional** usada por el predictor; no aumentan directamente la demanda en ese porcentaje.
 - Ver demanda proyectada, costo del MST y utilización de los tramos informados por la API.
@@ -52,6 +54,8 @@ El JSON se versiona para que Vercel pueda compilar solo `frontend/`, sin Python.
 
 ## Verificación
 
+Con la ampliación de casos pasaron **43 pruebas**, lint y build con TypeScript. La API local respondió seis combinaciones y caso desconocido 422; Edge comprobó tabla de 16 barrios, comparación, déficit progresivo de 47.09 m³/día en +30 % y móvil de 390 px sin desbordamiento. Esta verificación local no declara publicado el contrato nuevo. Los párrafos de Render y la instalación limpia anterior describen comprobaciones previas.
+
 Dentro de `frontend/`:
 
 ```powershell
@@ -61,7 +65,7 @@ npm.cmd run typecheck
 npm.cmd run build
 ```
 
-Pasaron 37 pruebas, lint y build (que incluye TypeScript). Las pruebas detectan datos inválidos, flujos imposibles, respuestas HTTP fallidas, espera agotada, confusión entre cero y dato ausente, escenarios desordenados, reintento y pérdida del resultado anterior. También verifican búsqueda/teclado, caudales de tramos no críticos y cambio de cobertura a déficit con respuestas controladas. Se rechazan resúmenes que contradicen la demanda o el balance y candidatos con costos/capacidades distintos del MST. Las nuevas pruebas de efectos cubren reinicio/limpieza del contador, retiro ante error/éxito, imagen sin WebGL y navegación sin nuevas simulaciones. Son pruebas del frontend; no demuestran la corrección matemática del backend.
+Pasaron 43 pruebas, lint y build (que incluye TypeScript). Las pruebas detectan datos inválidos, flujos imposibles, respuestas HTTP fallidas, espera agotada, confusión entre cero y dato ausente, escenarios desordenados, reintento y pérdida del resultado anterior. También verifican búsqueda/teclado, caudales de tramos no críticos y cambio de cobertura a déficit con respuestas controladas. Se rechazan resúmenes que contradicen la demanda o el balance y candidatos con costos/capacidades distintos del MST. Las nuevas pruebas de efectos cubren reinicio/limpieza del contador, retiro ante error/éxito, imagen sin WebGL y navegación sin nuevas simulaciones. Son pruebas del frontend; no demuestran la corrección matemática del backend.
 
 Se repitió la prueba en Edge con Render real tras los cambios de Matías: 17 nodos, 26 candidatos, 16 etiquetas con caudal (cero Sin dato), déficit base 732.56 m³/día y demanda +30 % mostrada como 2242.3 m³/día. A 390 px no hay desbordamiento horizontal de la página; el gráfico mantiene desplazamiento interno. Se renovaron las [capturas](../docs/capturas/). No se cambió código frontend para consumir el contrato completo.
 

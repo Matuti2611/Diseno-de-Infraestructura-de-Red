@@ -1,6 +1,12 @@
 # Propuesta de página y arquitectura inicial
 
-Estado: **página integrada con el contrato completo real de Render**, 16 caudales y balance visibles. Pasaron 37 pruebas, lint, TypeScript y build. El cliente admite `metricas_ml: null`, como la corrección local del backend. Faltan publicación de correcciones, Vercel y prueba en otra máquina; ver `verificacion-proyecto.md`. El registro de errores/resoluciones está en la sección de IA del informe.
+## Ampliación aprobada e implementada
+
+Ciro asumió completar las mejoras de capacidad: selector de casos original/progresivo, suministro/déficit por barrio y comparación Base/+10 %/+30 %. Implementadas con React/CSS existentes y cálculos en backend, sin dependencias nuevas. El original se conserva; las peticiones identifican el caso y se descartan respuestas desactualizadas. Las comparaciones requieren tres balances completos y se cancelan al cambiar de caso. Ver `casos-capacidad.md`.
+
+Verificación actual: 43 pruebas frontend, lint, TypeScript y build aprobados; integración de navegador con API local y móvil sin desbordamiento. Falta publicar/verificar API nueva en Render y frontend en Vercel. Las comprobaciones previas de Render que siguen describen el contrato anterior.
+
+Estado: **página integrada con el contrato completo real de Render**, 16 caudales y balance visibles. Pasaron 43 pruebas, lint, TypeScript y build. El cliente admite `metricas_ml: null`, como la corrección local del backend. Faltan publicación de correcciones, Vercel y prueba en otra máquina; ver `verificacion-proyecto.md`. El registro de errores/resoluciones está en la sección de IA del informe.
 
 Ciro aportó referencias de React Bits: se implementó HoloCard con Pikachu en una pestaña especial y LatticeLoader durante la carga real. TechText no se aplicó porque anima letras y no sustituye el SVG interactivo de la red. Sin dependencias adicionales ni Tailwind; detalle en `efectos-visuales.md`. Otras mejoras visuales requieren consulta al usuario. Node 24.x, `.nvmrc` y `vercel.json` ya están preparados. Una instalación nueva anterior a estos efectos pasó las verificaciones; el ensayo en otra computadora sigue pendiente, con pasos en `instalacion-reproducible.md`.
 

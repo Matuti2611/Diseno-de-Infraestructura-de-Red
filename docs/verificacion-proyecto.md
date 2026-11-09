@@ -1,4 +1,4 @@
-﻿# Verificación técnica del proyecto
+# Verificación técnica del proyecto
 
 Estado: integración completa verificada con Render y correcciones adicionales comprobadas localmente. Correcciones, entorno, efectos y documentación se agrupan en commits locales; el usuario realiza el push. Falta verificar las correcciones en Render y publicar el frontend.
 
@@ -7,7 +7,7 @@ Estado: integración completa verificada con Render y correcciones adicionales c
 - Kruskal manual con Union-Find; Edmonds–Karp manual con BFS y flujo residual. NetworkX sirve de representación y referencia de totales con tolerancia 0.1.
 - API con planta, 26 candidatos, 16 tendidos, sus 16 caudales y resumen de abastecimiento.
 - Frontend consume el contrato real, presenta caudales/balance y conserva estados explícitos para datos ausentes.
-- Métricas de ambos modelos reproducidas en memoria sin sobrescribir artefactos: lineal MAE 131.28/RMSE 172.97/R² 0.9939; árbol MAE 197.95/RMSE 308.79/R² 0.9807.
+- Nuevo entrenamiento reproducido sin sobrescribir el modelo, con métricas en archivo temporal: el JSON completo coincide con el entregado. Selección y comparación por CV de cinco pliegues dentro del 80 % de entrenamiento; exclusión de espaciales comparada allí. Lineal sin espaciales: MAE CV 141.80; test MAE 130.11/RMSE 172.14/R² 0.9940/MAPE 3.57 %. Desglose por tipo de zona y muestras de residuos presentes.
 
 ## Correcciones y registro de uso de IA
 
@@ -26,7 +26,7 @@ Las regresiones nuevas fallaron antes de corregir el código y ahora comprueban:
 - Kruskal productivo con costo conocido 6, conectividad y ausencia de ciclos; rechazo de redes vacías, desconectadas o con nodos declarados aislados.
 - Error de topología presentado por API como HTTP 503 en vez de resultado incompleto.
 
-Frontend: 37 pruebas, lint y build con TypeScript aprobados. El cliente ya acepta métricas null. Se incorporaron los efectos pedidos por Ciro: HoloCard en pestaña especial y LatticeLoader para solicitudes reales. Las cuatro pruebas nuevas verifican contador/limpieza, éxito/error, alternativa sin WebGL y navegación sin solicitudes extra; ver [efectos-visuales.md](efectos-visuales.md).
+Frontend antes de la ampliación de casos: 37 pruebas, lint y build con TypeScript aprobados. El cliente ya acepta métricas null. Se incorporaron los efectos pedidos por Ciro: HoloCard en pestaña especial y LatticeLoader para solicitudes reales. Las cuatro pruebas nuevas verifican contador/limpieza, éxito/error, alternativa sin WebGL y navegación sin solicitudes extra; ver [efectos-visuales.md](efectos-visuales.md).
 
 Se comprobó también HTTP local con una API temporal y métricas ausentes, sin tocar archivos reales: simulación 200 con 16 caudales y balance base sin cambios, `metricas_ml: null`; consulta de métricas 200/null; Z16 individual 10128.63 m³/mes y categoría inválida 422. Falta publicar estas correcciones y comprobarlas en Render.
 
@@ -44,10 +44,16 @@ Los porcentajes multiplican la tasa poblacional. Se recibieron 17 nodos, 26 cand
 
 El flujo máximo optimiza suministro total, no equidad. Puede haber tramos con cero y varias asignaciones máximas válidas; comparar totales y conservación, sin exigir una asignación idéntica a NetworkX.
 
+## Ampliación actual de casos y barrios
+
+Las dos mejoras están implementadas localmente: selección original/progresivo, regla reproducible del segundo CSV y suministro/déficit de cada barrio desde el supersumidero. La página tiene selector, detalle/tabla por barrio y comparación de tres escenarios, sin alterar el original ni añadir dependencias.
+
+**25 pruebas backend y 43 frontend aprobadas**, lint, TypeScript y build. ASGI automatizado de las seis combinaciones y ejemplo conocido de consumo/tránsito; HTTP local 200 para las seis y 422 para caso desconocido. Edge con API local confirmó 16 barrios, comparación, déficit progresivo de 47.09 m³/día en +30 % y móvil de 390 px sin desbordamiento ni excepciones. Reglas, cantidades publicadas y capturas en [casos-capacidad.md](casos-capacidad.md).
+
+La evaluación de ML ya está implementada y reproducida. Sus pruebas específicas y comparación con una referencia simple en el script son mejoras adicionales. La exportación usa explícitamente la configuración ganadora de CV, sin selección automática si cambian los datos. La comprobación adicional de mantener consumo histórico dio MAE 479.20 frente a 130.11 del modelo.
+
 ## Entorno y cierre pendiente
 
-Instalación nueva del backend comprobada con Python 3.12.10; scikit-learn 1.9.1 coincide con el artefacto. También se probaron pandas 3.1.1, NumPy 2.5.4, SciPy 1.18.1, NetworkX 3.7, Joblib 1.6.0, FastAPI 0.162.2, Uvicorn 0.54.0 y Pydantic 2.14.3.
+Dependencias fijadas, Python 3.12.10 y Node 24.x; no se incorporaron paquetes para estas ampliaciones. La instalación limpia anterior está documentada en [instalacion-reproducible.md](instalacion-reproducible.md); su prueba en otra computadora sigue pendiente.
 
-Requirements ya fija dependencias directas y transitivas; `.python-version` indica Python 3.12.10. Node queda en 24.x y `.nvmrc` registra 24.20.0; el lockfile conserva las versiones de paquetes. Antes de incorporar los efectos, una copia separada sin entornos previos pasó instalación, `pip check`, 22 tests backend, las 33 pruebas frontend de esa etapa, lint y build con TypeScript. npm aprovechó la caché local. Los efectos no agregan paquetes. La [guía de instalación](instalacion-reproducible.md) permite repetir el ensayo en otra computadora, que sigue pendiente.
-
-Falta separar selección/evaluación final del modelo y justificar features espaciales; completar pruebas HTTP automatizadas, publicar correcciones y verificar Render, y comprobar el proyecto desde otra máquina. `frontend/vercel.json` ya prepara la publicación; todavía no se importó ni publicó el frontend. Los efectos pedidos ya se probaron en Edge con textura/reflejos, movimiento reducido y móvil sin desbordamiento; volver a Capacidad conservó los 17 nodos/16 caudales reales. Consultar otros cambios visuales con Ciro. El registro adicional de herramientas/prompts se completa con información del grupo, sin inventar intervenciones.
+Falta actualizar/verificar API en Render, comprobar la página contra ella y publicar frontend en Vercel. No se confirmó el estado de la cuenta Vercel ni cambios remotos posteriores. Se repitieron 25/43 pruebas, lint, build y recorrido Edge antes de agrupar los cambios en commits locales; desconexión y reintento conservaron el resultado identificado y recuperaron la conexión. El usuario realiza el push. Conservar diferenciados resultados HTTP locales y observaciones previas del servicio público. Completar el registro de IA adicional con información confirmada del grupo.

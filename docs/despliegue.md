@@ -70,7 +70,7 @@ La raíz debe quedar en el repositorio completo por los imports `backend.app` y 
 La configuración está preparada en el repositorio; estos pasos todavía no se ejecutaron en una cuenta. Los efectos pedidos por el usuario ya están implementados y verificados localmente. Antes de desplegar, los cambios que se quieran publicar deben estar subidos a GitHub.
 
 1. En el panel de Vercel, pulsar **Add New… → Project**.
-2. En **Import Git Repository**, elegir la conexión de GitHub y buscar `Matuti2611/Diseno-de-Infraestructura-de-Red`. Pulsar **Import**. Si no aparece, el propietario debe dar acceso al repositorio a la aplicación de Vercel; ser colaborador de GitHub no garantiza ese permiso.
+2. En **Import Git Repository**, buscar el repositorio y pulsar **Import**. Si pertenece a una cuenta personal de GitHub, Vercel exige que lo importe su propietario: un colaborador no puede hacerlo desde su propia cuenta solo por habilitar la app. El propietario puede usar **Configure GitHub App** para autorizar ese repositorio si no aparece. En una organización se requiere ser miembro con permisos adecuados; un colaborador externo no basta. Si se usa un fork propio, hay que mantenerlo sincronizado.
 3. En **Configure Project**, usar un nombre descriptivo, por ejemplo `infraestructura-red`.
 4. En **Root Directory**, pulsar **Edit**, seleccionar `frontend` y confirmar. En **Framework Preset**, comprobar **Vite**.
 5. En **Build and Output Settings**, comprobar los valores de `frontend/vercel.json`: instalación `npm ci`, build `npm run build`, salida `dist`. No usar comandos Python aquí.
@@ -78,6 +78,8 @@ La configuración está preparada en el repositorio; estos pasos todavía no se 
 7. Pulsar **Deploy**. `engines.node` del `package.json` establece **24.x**; comprobar la versión usada en los logs. También se puede consultar en **Settings → Build and Deployment → Node.js Version**.
 8. Cuando termine, abrir la URL HTTPS y comprobar las vistas Tendidos/Capacidad, caudales, balance, selector y tabla. Repetir en móvil y tras inactividad de Render. Si falla, revisar la solicitud de red y los logs reales; no cambiar la API por datos simulados.
 9. Compartir el origen definitivo con Matías para revisar CORS en FastAPI. Actualmente admite todos los orígenes sin credenciales; al restringirlo, contemplar las direcciones de producción, previews que se usen y desarrollo local.
+
+Para la ampliación de casos/barrios, primero actualizar Render y verificar `POST /api/simular-red` con `caso_red: progresivo`, confirmación del caso y balances individuales. Luego probar selector y comparación desde el frontend y publicar su build. La API anterior puede ignorar el campo: la página lo detecta y no presenta otro caso como Progresivo. Resultado local de referencia: déficit 0/0/47.09 m³/día en Base/+10 %/+30 %. Ver [casos-capacidad.md](casos-capacidad.md).
 
 Si cambia `VITE_API_URL`, generar un nuevo despliegue: no se modifica el bundle ya publicado. La aplicación actual no usa rutas de React Router, por lo que no se añadieron reglas de reescritura. Registrar la URL y qué se comprobó en `context.md` al finalizar.
 

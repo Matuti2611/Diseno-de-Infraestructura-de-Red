@@ -1,5 +1,11 @@
 # Contrato de API e integración de capacidad
 
+## Ampliación local: casos y abastecimiento por barrio
+
+Implementada y comprobada contra API local, pendiente de publicación: la petición agrega `caso_red` (`original` por omisión o `progresivo`); la respuesta confirma caso y crecimiento. Los barrios agregan `caudal_abastecido_m3_dia` y `deficit_m3_dia`, obtenidos del enlace al supersumidero. PLANTA los devuelve como null. El resumen suma las cantidades publicadas por barrio; MST y candidatos corresponden al mismo caso. Reglas, JSON, invariantes y seis resultados en [casos-capacidad.md](casos-capacidad.md).
+
+El frontend incorpora selector, detalle/tabla por barrio y comparación de tres escenarios. Rechaza una respuesta que no confirme el caso progresivo para no confundirla con una API antigua que ignore el campo. La compatibilidad original sigue mostrando datos ausentes explícitamente.
+
 Estado: **implementado en backend y frontend y comprobado en Render**. La respuesta pública ya incluye planta, candidatos, 16 flujos y resumen. Se conserva compatibilidad del cliente con respuestas que omitan los campos opcionales. Los cierres pendientes están en `verificacion-proyecto.md`.
 
 Corrección local posterior: `metricas_ml` es objeto válido o `null` si su archivo está ausente/inválido; `GET /api/modelo/metricas` también devuelve null en ese caso. No hay cifras constantes de respaldo. La página ya admite esa ausencia. La API informa HTTP 503 si la red candidata no conecta todos los nodos y el endpoint individual rechaza tipos de zona no admitidos con 422. Se comprobó HTTP local; falta publicar estas correcciones. Error, detección y resolución se documentan en la sección de IA de `Informe.md`.

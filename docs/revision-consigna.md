@@ -6,6 +6,8 @@ Esta revisión contrasta el pedido con el código y la documentación. No reempl
 
 ## Evaluación actual
 
+Ampliación actual: casos original/progresivo y suministro/déficit por barrio implementados y comprobados localmente, junto con selector y comparación de escenarios en la web. **25 pruebas backend, 43 frontend, lint y build con TypeScript aprobados**. La regla sintética y la transición a déficit están documentadas en [casos-capacidad.md](casos-capacidad.md). No son requisitos adicionales impuestos por el enunciado: permiten explicar mejor los cálculos exigidos. Falta publicar/verificar API nueva en Render y frontend en Vercel, y repetir la instalación en otra computadora.
+
 La dirección del proyecto coincide con el TP elegido: cooperativa de agua, regresión de consumo, demandas por nodo, árbol de menor costo y evaluación de capacidad mediante flujo. Los datos sintéticos son una opción expresamente válida. El frontend ya se integra con el backend real, pero el proyecto **todavía no está completo**.
 
 Se completaron los algoritmos manuales, contrato y visualización de caudales/balance reales; se verificó Render y se reprodujeron métricas. Las correcciones locales están probadas y sus errores/detección/resolución se registran en la sección de IA del informe. Quedan publicación de correcciones, metodología final, frontend y entrega; estado en `verificacion-proyecto.md`.
@@ -52,7 +54,7 @@ Se completaron los algoritmos manuales, contrato y visualización de caudales/ba
 ## Verificaciones de esta revisión
 
 - Consigna leída completa; requisitos generales y páginas 7–8 contrastados con el proyecto. Los datos fueron verificados contra sus reglas sintéticas y la generación está cubierta en la suite.
-- Verificación actual: 22 tests backend y 37 frontend aprobados, más lint y build con TypeScript. Las regresiones reprodujeron los fallos y luego pasaron; métricas/modelo/CSV no se sobrescribieron.
+- Verificación actual: 25 tests backend y 43 frontend aprobados, más lint y build con TypeScript. Las pruebas de la ampliación verifican ASGI, casos, balances por barrio y globales, y comparación sin mezclar respuestas. Modelo y CSV no se sobrescribieron.
 - Render: tres POST con contrato completo. Edge: 16 etiquetas con caudal, cero Sin dato y déficit visible; móvil de 390 px sin desbordamiento. Capturas renovadas.
 - Backend y frontend instalados en copia nueva, con dependencias fijadas: 22/33 tests, lint y build con TypeScript aprobados. Se resolvió el bloqueo anterior por permisos Windows. Falta probar otra computadora siguiendo `instalacion-reproducible.md`.
 - Error, detección, resolución y pruebas de los casos corregidos se registran en la sección de IA de `Informe.md`. La verificación técnica está en `verificacion-proyecto.md`.
